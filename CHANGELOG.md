@@ -8,6 +8,17 @@ This project follows [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+
+- **The network-idle notes no longer name a crumbs adapter that does not exist.** The skill said crumbs's `DioHttpAdapter` reports 0, but 1.0.0 of crumbs removed it and `pendingCount` has no default body. Only an adapter that implements `pendingCount` (`MagicHttpFacadeAdapter`, in `magic_devtools`) moves the count, and an interceptor that only calls `CrumbsStore.recordHttp` counts nothing. (`skills/tapir/`, `llms.txt`)
+- **One install command.** tapir depends on the Flutter SDK, so the README, `llms.txt` and the skill say `flutter pub add tapir`, as the installation page already did.
+- **The `install.yaml` message and the installation page count the Wind contract right.** The contract carries seven keys (`className`, `breakpoint`, `brightness`, `platform`, `states`, `bgColor`, `textColor`), not six, and the Magic enrichers are listed as examples because there are more than the five named. (`install.yaml`, `doc/getting-started/installation.md`)
+- **One startup figure for the fast wrapper.** The install message and the installation page quoted about 110 ms and about 50 ms; both say about 0.2 s, which is what `./bin/dowel` measures on a cached build. (`install.yaml`, `doc/getting-started/installation.md`)
+
+### Changed
+
+- **The pub.dev topic `mcp-server` is `mcp`.** Only tapir and crumbs used the first; the second is shared by many MCP packages, so the listing is easier to find. (`pubspec.yaml`)
+
 ## [1.0.0] - 2026-11-14
 
 ### Added

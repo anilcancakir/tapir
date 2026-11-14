@@ -28,7 +28,7 @@
 | Fact | Value |
 |---|---|
 | Package | [`tapir`](https://pub.dev/packages/tapir) |
-| Install | `dart pub add tapir`, then `dart run tapir tapir:install` |
+| Install | `flutter pub add tapir`, then `dart run tapir tapir:install` |
 | Import | `package:tapir/tapir.dart` (`TapirPlugin.install()`, behind `if (!kReleaseMode)`) |
 | Entry points | `dart run tapir <command>`, `./bin/dowel <command>`, `TapirPlugin.install()`, `TapirPlugin.enrichers`, `TapirDowelProvider` (`package:tapir/cli.dart`), `dart run tapir mcp:serve` |
 | Platforms | Any Flutter target that exposes a VM Service in a debug or profile build: Android, iOS, web, macOS, Windows, Linux; viewport and device emulation need Chrome with a CDP port; `tapir_hot_reload_and_snap` writes to the `flutter run` stdin FIFO, so it needs a POSIX host; on a Windows host `mcp:install` writes a `dart run` entry, never `./bin/dowel` |
@@ -39,7 +39,7 @@
 ## Install
 
 ```bash
-dart pub add tapir
+flutter pub add tapir
 dart run tapir tapir:install
 dart run tapir start --device=macos   # dowel records the session every tapir:* command dials
 dart run tapir tapir:snap

@@ -169,7 +169,7 @@ Not gated; a delta is a `jumpTo` clamped to the extents. Returns `{ scrolled, fi
 
 ### tapir_wait_for_network_idle
 
-`timeoutMs` (5000), `idleMs` (500, the contiguous zero window), `pollIntervalMs` (200, minimum 100). Returns `{ matched: true, idleAchievedMs }`; a timeout is an error of type `timeout` whose message names `maxPending`. The in-flight count comes from `pendingHttpCountReader`, which an app wires to the separate `crumbs` package (`() => CrumbsStore.pendingHttpCount`) with an HTTP adapter that overrides `pendingCount` (the default and crumbs's `DioHttpAdapter` report 0; `MagicHttpFacadeAdapter` from `magic_devtools` counts): until both are in place the count is always 0, so the call returns `matched: true` after one idle window (about `idleMs`, no traffic seen) or a `timeout` error when `timeoutMs` is shorter than that window; assume it always reports idle.
+`timeoutMs` (5000), `idleMs` (500, the contiguous zero window), `pollIntervalMs` (200, minimum 100). Returns `{ matched: true, idleAchievedMs }`; a timeout is an error of type `timeout` whose message names `maxPending`. The in-flight count comes from `pendingHttpCountReader`, which an app wires to the separate `crumbs` package (`() => CrumbsStore.pendingHttpCount`) with an HTTP adapter that implements `pendingCount` (crumbs ships no adapter and `pendingCount` has no default body; `MagicHttpFacadeAdapter` from `magic_devtools` counts, and an interceptor that only calls `CrumbsStore.recordHttp` counts nothing): until both are in place the count is always 0, so the call returns `matched: true` after one idle window (about `idleMs`, no traffic seen) or a `timeout` error when `timeoutMs` is shorter than that window; assume it always reports idle.
 
 ## Navigation and overlays
 
