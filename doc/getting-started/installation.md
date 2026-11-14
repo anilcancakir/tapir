@@ -111,7 +111,7 @@ either, both, or neither depending on your stack.
 | Integration | Package | Enrichment |
 |:------------|:--------|:-----------|
 | `MagicTapirIntegration.install()` | `magic_devtools` (a release built on tapir) | MagicForm field values, validation state, named route per node. |
-| `Wind.installDebugResolver()` (in `package:wind_kit/wind_kit.dart`) | `wind_kit` (any release that ships `Wind.installDebugResolver()`) | Wind state surfaces through the neutral `WindDebugRegistry` bridge; tapir emits the seven contract fields (`className`, `breakpoint`, `brightness`, `platform`, `states`, plus `bgColor` and `textColor` when they resolve) automatically without enricher registration. |
+| `Wind.installDebugResolver()` (in `package:wind_kit/wind_kit.dart`) | `wind_kit` (any release that ships `Wind.installDebugResolver()`) | Wind state surfaces through the neutral `WindDebugRegistry` bridge; tapir reads the seven contract fields (`className`, `breakpoint`, `brightness`, `platform`, `states`, plus `bgColor` and `textColor` when they resolve) without enricher registration, but only prints them when enrichers are on: `tapir:snap --includeEnrichers` returns all of them, a plain `tapir:snap` none, and `tapir:observe` returns only `breakpoint` and `states` unless you pass `--includeEnrichers=full`. |
 
 ```dart
 import 'package:magic_devtools/tapir.dart'; // magic_devtools only

@@ -1726,13 +1726,13 @@ Dispatch: `ext.tapir.wait_for_network_idle`
 
 Wait until the running app reports zero in-flight HTTP requests for a contiguous `idleMs`
 window. Playwright `waitForLoadState` network-idle semantics. Missing-crumbs graceful:
-returns idle immediately when crumbs is not set up.
+returns idle after one idle window (about `idleMs`) when crumbs is not set up.
 
 ### Input schema
 
 | Parameter | Type | Required | Description |
 |:---|:---|:---|:---|
-| `timeoutMs` | integer | no | Maximum total wait time. Default `5000`. |
+| `timeoutMs` | integer | no | Deadline, checked after each poll sample: a window that completes at or after it still matches. Default `5000`. |
 | `idleMs` | integer | no | Contiguous-zero window before declaring idle. Default `500`. |
 | `pollIntervalMs` | integer | no | Poll cadence in milliseconds. Minimum `100`; default `200`. |
 
@@ -1741,7 +1741,9 @@ returns idle immediately when crumbs is not set up.
 Success: `{ matched: true, idleAchievedMs: <int> }`.
 
 Error on timeout: structured error envelope `{ type: "timeout", message: "max in-flight
-count observed: <int>" }`.
+count observed: <int>" }`. The idle window completes after `ceil(idleMs / pollIntervalMs)`
+zero samples, so with nothing in flight and the defaults it matches at about 400 ms; only a
+`timeoutMs` reached before that (200 or less with the defaults) is a timeout.
 
 ### Example call
 
