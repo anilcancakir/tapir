@@ -117,7 +117,7 @@ For a visual check, `tapir_screenshot { ref: "e7", format: "png" }` before and a
 ## Recovery
 
 | Symptom | Move |
-|---|---|
+|:---|:---|
 | `defunct (element no longer mounted)` | Re-snap, pick the ref again; if the widget is gone from a fresh snap, the screen changed under you |
 | `obscured by other widget (top=...)` | `tapir_reset_overlays`, retry; for a cover that lets touches through, `checkReceivesEvents: false` |
 | `not stable (rect changed by Xpx)` | Wait for the animation (`tapir_wait_for { textGone: ... }`), retry; an endless animation takes `checkStable: false` |

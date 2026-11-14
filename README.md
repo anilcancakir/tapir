@@ -26,7 +26,7 @@
 ## At a glance
 
 | Fact | Value |
-|---|---|
+|:---|:---|
 | Package | [`tapir`](https://pub.dev/packages/tapir) |
 | Install | `dart pub add tapir`, then `dart run tapir tapir:install` |
 | Import | `package:tapir/tapir.dart` (`TapirPlugin.install()`, behind `if (!kReleaseMode)`) |
@@ -73,7 +73,7 @@ dart run tapir tapir:snap --interactiveOnly
 ```
 
 | Token | Minted by | Lifetime |
-|---|---|---|
+|:---|:---|:---|
 | `e<N>` | `tapir:snap` | The same Semantics node keeps its token across snapshots, and a token outlives its widget. A ref whose element left the tree is relocated by label (`reresolved` on the response) only when the snapshot recorded a binding for it, the live tree has the same number of nodes with that label and the match sits on the route the ref was minted on; otherwise it fails as `defunct` and you re-snap |
 | `q<N>` | `tapir:find`, `tapir:observe` | Re-resolved against the live tree on every action; survives rebuilds |
 
@@ -89,7 +89,7 @@ dart run tapir tapir:fill --ref=e1 --text="ada@example.com" --json
 Gestures (`tap`, `hover`, `drag`, `scroll`, `double_click`, `right_click`, `triple_click`) and text verbs (`type`, `clear`, `fill`, `press_key`) dispatch real pointer and key events into the widget tree. `tap`, `hover`, `drag`, the click variants, `type`, `fill` and `set_checkbox` (on the control it taps) first pass the gate (`clear`, `scroll`, `press_key` and `select_option` skip it), in a fixed order, and a refusal names the reason an agent can branch on:
 
 | Check | Refusal substring | Recovery |
-|---|---|---|
+|:---|:---|:---|
 | Defunct (preflight) | `defunct (...)` | Re-snap |
 | Enabled | `not enabled` | Re-snap; the widget may enable later |
 | Zero rect | `zero rect` | Re-snap or re-find |
@@ -107,7 +107,7 @@ dart run tapir tapir:wait_for --text="Welcome back" --timeoutMs=5000
 ```
 
 | Verb | Returns |
-|---|---|
+|:---|:---|
 | `tapir:wait_for` | Waits for `--text`, `--textGone` or `--expression` |
 | `tapir:wait_for_network_idle` | Waits until in-flight HTTP requests stay at zero for `--idleMs` |
 | `tapir:observe` | A flat candidate list of interactive widgets with `q<N>` handles: observe once, act many times (no model call inside tapir) |
@@ -125,7 +125,7 @@ dart run tapir tapir:device_profile --preset=pixel-8
 ```
 
 | Surface | Behaviour |
-|---|---|
+|:---|:---|
 | `tapir:screenshot` | JPEG (default) or PNG of the viewport, or of one widget with `--ref` (and a sub-rect of it with `--rect`) |
 | Web screenshot | With `--cdp-port`, the CLI captures through CDP `Page.captureScreenshot`; the `tapir_screenshot` MCP tool stays in-isolate and can time out under CanvasKit, so prefer the CLI on web |
 | `tapir:device_profile` | Presets `iphone-x`, `iphone-13`, `iphone-15-pro`, `pixel-5`, `pixel-8`, `ipad-pro-12.9`, `desktop-1440`, `desktop-1920` (viewport, DPR, touch, user agent); the emulation ends with the command, the window size stays. `tapir:resize_viewport --width --height` overrides the viewport until exit, or longer with `--hold` |
@@ -140,7 +140,7 @@ dart run tapir tapir:perf_end
 ```
 
 | Verb | Does |
-|---|---|
+|:---|:---|
 | `tapir:perf_begin`, `tapir:perf_end` | Bracket one interaction; `attribution` ranks the widget builds that cost time next to Wind and Magic counters, `timing` reports frame timings you can quote. A session in which the engine rendered nothing is refused (`refused: true`, exit `1`), never reported as zeros that read as fast |
 | `tapir:perf_insight` | The rows behind one insight of the last report |
 | `tapir:perf_run`, `tapir:perf_compare`, `tapir:perf_campaign` | Repeat a scenario from a clean start and write medians, judge one run against another, run a campaign of scenarios from cold starts |
@@ -155,7 +155,7 @@ The `tapir_*` tools ride on the `dowel` MCP server, so the client config key is 
 ```
 
 | Client | Install |
-|---|---|
+|:---|:---|
 | Claude Code | `claude mcp add dowel -- ./bin/dowel mcp:serve`, then `/mcp reconnect dowel` after a change |
 | VS Code | `code --add-mcp '{"name":"dowel","type":"stdio","command":"dart","args":["run","tapir","mcp:serve"]}'` |
 | Cursor | `.cursor/mcp.json` (project) or `~/.cursor/mcp.json` (user) |
@@ -169,7 +169,7 @@ Without tapir you hot reload, take a screenshot, drag the PNG into the chat, pas
 ## For AI coding agents
 
 | Do | Because |
-|---|---|
+|:---|:---|
 | Install tapir only behind `if (!kReleaseMode)` | Anyone who reaches the VM Service of a build that carries tapir can drive the app |
 | Start the app with `dart run tapir start`, not `flutter run` | Every `tapir:*` command dials the session dowel records |
 | Snap again after a navigation or rebuild, or use a `q<N>` handle from `tapir:find` | `e<N>` refs are frozen to the snapshot that minted them |

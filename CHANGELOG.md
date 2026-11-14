@@ -11,6 +11,7 @@ This project follows [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.
 ### Fixed
 
 - **The tables in the command pages are left-aligned.** The 18 pages under `doc/commands/` used the unaligned `|---|` separator; they use `|:---|` like the rest of the docs. (`doc/commands/`)
+- **The tables in the README, `ARCHITECTURE.md` and the skill are left-aligned too.** (`README.md`, `ARCHITECTURE.md`, `skills/tapir/`)
 
 ## [1.0.0] - 2026-11-14
 
