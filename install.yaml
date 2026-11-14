@@ -37,22 +37,22 @@ post_install:
 
     2. If you use Magic and your magic_devtools ships `package:magic_devtools/tapir.dart`
        (a release built on tapir), ALSO call MagicTapirIntegration.install()
-       AFTER Magic.init() to wire the Magic-side enrichers
-       (magicControllerEnricher, magicFormErrorsEnricher, magicGateResultEnricher,
-        magicMiddlewareEnricher, magicAuthUserEnricher). An older magic_devtools has no
+       AFTER Magic.init() to wire the Magic-side enrichers (for example
+       magicControllerEnricher, magicFormErrorsEnricher, magicGateResultEnricher,
+       magicMiddlewareEnricher and magicAuthUserEnricher). An older magic_devtools has no
        tapir integration yet: upgrade it first; tapir:install skips this line until then.
 
     3. If you use Wind, call `Wind.installDebugResolver()` inside `!kReleaseMode` (main barrel import).
        Wind state reaches tapir through the neutral
        `wind_kit_diagnostics_contracts.WindDebugRegistry` bridge, which the host app arms by
        calling `Wind.installDebugResolver()`; tapir reads it inside
-       `ext_snapshot.dart` and `ext_observe.dart` ahead of the enricher loop. The 6 core fields
-       (breakpoint, brightness, platform, states, bgColor, textColor) still surface without any
-       enricher registration.
+       `ext_snapshot.dart` and `ext_observe.dart` ahead of the enricher loop. The 7 contract fields
+       (className, breakpoint, brightness, platform, states, plus bgColor and textColor when they
+       resolve) still surface without any enricher registration.
 
     4. Verify the CLI:
 
-         ./bin/dowel list                    # fastcli wrapper (~110ms warm AOT; scaffolded by tapir:install)
+         ./bin/dowel list                    # fastcli wrapper (about 0.2 s warm AOT; scaffolded by tapir:install)
          dart run tapir list     # tapir's Flutter-free wrapper: same surface, ~3s startup
 
     5. Verify the MCP surface:
