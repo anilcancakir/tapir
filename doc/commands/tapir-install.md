@@ -47,7 +47,7 @@ dart run tapir tapir:install
 `tapir:install` takes no options. Its inputs come from the current working directory:
 
 | Input | Purpose |
-|-------|---------|
+|:-------|:---------|
 | `lib/main.dart` | Target file for snippet injection. |
 | `pubspec.yaml` | Inspected for a `magic_devtools:` dependency entry. Drives the conditional Magic wiring described under [Anchor modes](#anchor-modes). |
 | `.dart_tool/package_config.json` | Read only when the Magic wiring applies, to find the resolved `magic_devtools` and check that it ships `lib/tapir.dart`. The nearest one at or above the project is used, so a pub workspace member reads the workspace root's; an unreadable or invalid one counts as unresolved and gets the warning. A `rootUri` that points outside the project resolves too: the relative `../../magic_devtools` pub writes for `path: ../magic_devtools`, a path with a trailing slash, percent-encoded characters or an absolute `file:` URI. |
@@ -61,7 +61,7 @@ dart run tapir tapir:install
 `tapir:install` returns an integer exit code via `Future<int>`:
 
 | Exit code | Meaning |
-|-----------|---------|
+|:-----------|:---------|
 | `0` | Success. `lib/main.dart` was either updated with the required snippets or already contained them. The command prints a `tapir:install complete` success line, including when a Phase 2 subprocess failed (that case prints a warning above it). |
 | `1` | `lib/main.dart` not found at the resolved path. The command prints an error advising the operator to run `tapir:install` from a Flutter project root. |
 

@@ -35,7 +35,7 @@ dart run tapir tapir:observe [--intent=<hint>]
 ## Arguments
 
 | Option | Type | Default | Description |
-|--------|------|---------|-------------|
+|:--------|:------|:---------|:-------------|
 | `intent` | string | unset | Free-form caller hint describing what the agent is looking for. Accepted for caller-side logging only; the handler does not use it for ranking or filtering and the response does not carry it. |
 | `roles` | csv string | unset (every role) | Comma-separated role filter (e.g. `button,textbox,checkbox`). Omit for every role. Useful when the agent already knows it only cares about, say, form fields. |
 | `limit` | int (string) | `50` | Maximum number of candidates to return. The handler walks the tree in order and stops once it has N. |

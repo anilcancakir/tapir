@@ -36,7 +36,7 @@ Three escalating layers run in order, each a no-op when the prior already cleare
 ## Returns
 
 | Exit code | Meaning |
-|-----------|---------|
+|:-----------|:---------|
 | `0` | Reset attempted. Emits the JSON result. |
 | non-zero | VM Service handler returned an error (no running app at the recorded URI, unexpected failure). |
 

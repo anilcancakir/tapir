@@ -35,7 +35,7 @@ The pointer is dispatched at the target's LIVE centre: the handler re-resolves t
 ## Arguments
 
 | Option | Type | Default | Required | Description |
-|--------|------|---------|----------|-------------|
+|:--------|:------|:---------|:----------|:-------------|
 | `--ref` | string | (none) | yes (`mandatory: true`) | Snapshot ref token (e.g. `e1` from a prior `tapir:snap`, or `q1` from a prior `tapir:find`). Empty values trigger a CLI-side error with exit code `1` before the VM Service call is made. |
 | `--includeSnapshot` | flag | `false` | no | Embed the post-tap snapshot YAML in the response. Useful when the tap is expected to trigger a navigation or modal and the next agent step needs the fresh tree. |
 | `--snapshot` | `full`, `diff` or `none` | (none) | no | Print the post-tap snapshot after the one-line summary and override `--includeSnapshot`. `full` is the whole tree; `diff` is only the lines the tap changed since your last unfiltered snapshot (a `tapir:snap` or an earlier action), as `- old` then `+ new` per changed row, `+ ` for an added row, `- ` for a removed one, and a `(K of N lines changed)` footer; `none` prints nothing. With no baseline yet, `diff` returns the full text. Over MCP this is the `snapshot` enum on `tapir_tap`. |
@@ -55,7 +55,7 @@ The two `check*` flags default to `true`. Disable them with the inverted form (`
 `tapir:tap` returns an integer exit code via `Future<int>`:
 
 | Exit code | Meaning |
-|-----------|---------|
+|:-----------|:---------|
 | `0` | Tap synthesised. The handler emits either `Tapped <ref>` (default) or the full JSON envelope when `--includeSnapshot` is set. |
 | `1` | `--ref` was missing or empty (CLI-side guard fires before the VM Service call). |
 | non-zero | VM Service handler returned `ServiceExtensionResponse.error`. Common causes: ref not found in the registry, actionability gate failure, no running app at the recorded URI. |

@@ -28,7 +28,7 @@ dart run tapir tapir:perf_end [--json]
 ## Returns
 
 | Exit code | Meaning |
-|-----------|---------|
+|:-----------|:---------|
 | `0` | Report returned. |
 | `1` | The run was REFUSED (see below), or the handler returned an error. |
 
@@ -90,7 +90,7 @@ Attribution milliseconds are inflated by the profiling that makes attribution po
 At most six, sorted by severity (`error`, `warn`, `info`) then `estimatedSavingsMs`. Each carries `id`, `severity`, `title`, `evidence {metric, value, perFrame, threshold}` and `nextStep`; the threshold it was judged against is always in the evidence, so a verdict can be checked rather than trusted. Ids are assigned before the sort and the cut, so an insight counted in `omitted.insights` is still drillable.
 
 | Metric | Fires when | Severity |
-|---|---|---|
+|:---|:---|:---|
 | `framesOverBudget` | a frame's slower thread exceeds 16.7ms | `error` past a 0.1 share of painted frames, else `warn` |
 | `framesDropped` | the `frameNumber` sequence steps by 2 or more | `error` past a 0.1 share, else `warn` |
 | `blockSelfMs` | one block owns at least 0.3 of all self time and at least 1ms per painted frame | `error` past 8.35ms per frame, else `warn` |

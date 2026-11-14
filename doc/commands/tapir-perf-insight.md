@@ -20,7 +20,7 @@ dart run tapir tapir:perf_insight --id=<I1> [--token=<perf-1>] [--json]
 `tapir:perf_insight` requires a running Flutter session (`CommandBoot.connected`) and calls `ext.tapir.perf_insight`.
 
 | Flag | Default | Meaning |
-|------|---------|---------|
+|:------|:---------|:---------|
 | `--id` | required | Insight id from the `insights[]` list `tapir:perf_end` returned. Ids are assigned before the report cuts its list, so one counted in `omitted.insights` is drillable too. |
 | `--token` | none | The report's `sessionToken`. Only the most recent closed session is kept; a token naming any other is refused, which guards against reading a newer session than the report you hold. |
 | `--json` | `false` | Print the raw envelope, `detail` included, instead of the human summary. |
@@ -31,7 +31,7 @@ dart run tapir tapir:perf_insight --id=<I1> [--token=<perf-1>] [--json]
 ## Returns
 
 | Exit code | Meaning |
-|-----------|---------|
+|:-----------|:---------|
 | `0` | Drill-down returned. |
 | `1` | `--id` missing. |
 | non-zero | The handler returned an error (see below). |
@@ -58,7 +58,7 @@ dart run tapir tapir:perf_insight --id=<I1> [--token=<perf-1>] [--json]
 `detail` depends on the rule:
 
 | Metric | `detail` |
-|---|---|
+|:---|:---|
 | `framesOverBudget` | `overBudgetBuild`, `overBudgetRaster`, and up to 10 `worstFrames`, each with its top 5 blocks by self time |
 | `framesDropped` | up to 20 `gaps` as `{after, next, missing}`, plus `gapsOmitted` |
 | `blockSelfMs` | the `block` (self and inclusive ms, count, frames, share), `totalSelfMs`, and the 10 frames where it cost most |

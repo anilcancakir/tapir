@@ -35,7 +35,7 @@ dart run tapir tapir:screenshot --output=<path>
 ## Arguments
 
 | Option | Abbr | Type | Default | Required | Description |
-|--------|------|------|---------|----------|-------------|
+|:--------|:------|:------|:---------|:----------|:-------------|
 | `--output` | `-o` | string (path) | (none) | yes (`mandatory: true`) | Output file path. Resolved relative to the CWD. The directory must already exist. |
 | `--format` | none | enum | inferred from `--output`, else `jpeg` | no | One of `jpeg`, `png`. Constrained by `allowed: ['jpeg', 'png']` so any other value errors out at parse time. See [Format and quality](#format-and-quality) for the inference. |
 | `--quality` | none | int (string-parsed) | `70` | no | JPEG quality, range 1-100. Ignored for PNG. Falls back to `70` when the value fails `int.tryParse`. |
@@ -52,7 +52,7 @@ The `--output` guard fires before the VM Service call; an empty or missing path 
 `tapir:screenshot` returns an integer exit code via `Future<int>`:
 
 | Exit code | Meaning |
-|-----------|---------|
+|:-----------|:---------|
 | `0` | Screenshot captured and written. The command prints `Wrote <N> bytes (<K> KB, <format>) to <path>` where `<N>` is the size of the decoded image (useful for spotting empty buffers without inspecting the file). |
 | `1` | `--output` was missing or empty, or `--rect` was given without `--ref` (CLI-side guards); OR the VM Service handler returned a response without a `base64` field. |
 
@@ -90,7 +90,7 @@ The handler never resizes the screenshot; the captured image matches the running
 ## CDP path vs. in-isolate path
 
 | Condition | Path taken |
-|---|---|
+|:---|:---|
 | No `cdpPort` in state (native target) | `ext.tapir.screenshot` (in-isolate) |
 | `cdpPort` set (web target) | CDP `Page.captureScreenshot` |
 
