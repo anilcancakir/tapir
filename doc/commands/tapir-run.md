@@ -25,7 +25,7 @@ dart run tapir tapir:run [--continue] "<step>" ["<step>" ...]
 `tapir:run` requires a running Flutter session (`CommandBoot.connected`). Each step is one positional argument, so quote it. With no step it prints `No steps given` and exits `1`.
 
 | Option | Type | Default | Description |
-|--------|------|---------|-------------|
+|:--------|:------|:---------|:-------------|
 | `--continue` | flag | `false` | Run every step even after one fails, and exit with the first non-zero code. Without it the batch stops at the first failing step. |
 
 ---
@@ -75,7 +75,7 @@ One summary line per step, then the last step's output:
 ## Exit codes
 
 | Exit code | Meaning |
-|-----------|---------|
+|:-----------|:---------|
 | `0` | Every step exited `0`. |
 | `1` | No steps were given; or the first failing step failed on its grammar (nested run, unknown verb, not a connected verb, bad option, bad quoting) or returned `1` itself. |
 | `3` | The first failing step threw (for example a VM Service error). |
@@ -102,7 +102,7 @@ The `tapir_run` tool takes the same steps as a list and routes through the subst
 ```
 
 | Property | Type | Required | Description |
-|----------|------|----------|-------------|
+|:----------|:------|:----------|:-------------|
 | `steps` | array<string> | yes | Verb lines, run in order, without the `tapir:` prefix. |
 | `continue` | boolean | no | Keep running after a failing step (default `false`). |
 

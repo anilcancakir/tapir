@@ -36,7 +36,7 @@ At least one of the four predicate options must be non-empty (`--within` is a sc
 ## Arguments
 
 | Option | Type | Default | Description |
-|--------|------|---------|-------------|
+|:--------|:------|:---------|:-------------|
 | `--text` | string | unset | Exact match against an accessibility label first, then against the `Text.data` of a rendered `Text` as a fallback. Most common predicate; mirrors Playwright's `getByText` with exact-match semantics. |
 | `--contains` | string | unset | Substring match against the visible text label or Semantics label (case-sensitive). Use when the label is dynamic (counters, timestamps, plurals) and exact `--text` is too brittle. |
 | `--semanticsLabel` | string | unset | Exact match against the widget's accessibility label (the explicit `Semantics(label: ...)` value set by the widget tree). Use when the visible text and the a11y label diverge. |
@@ -55,7 +55,7 @@ The CLI guards an empty params map (`Provide at least one of --text / --contains
 `tapir:find` returns an integer exit code via `Future<int>`:
 
 | Exit code | Meaning |
-|-----------|---------|
+|:-----------|:---------|
 | `0` | The call completed. A match mints a handle and emits the JSON envelope below; no match emits `{"ref": null, "matched": false}` (check `matched` before using `ref`). |
 | `1` | No predicate supplied. The CLI guard fires before the VM Service call. |
 | non-zero | VM Service handler returned `ServiceExtensionResponse.error`, or the call could not reach the app. |

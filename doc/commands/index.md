@@ -43,7 +43,7 @@ Deep-dive pages exist for the commands whose flag surface, return shape, or comp
 The two foundational read commands. `tapir:snap` walks the Semantics tree and emits YAML with `[ref=eN]` tokens that every subsequent action command consumes. `tapir:screenshot` captures a frame of the running app and writes it to a file.
 
 | Command | Description | Boot Mode | VM Extension |
-|---------|-------------|-----------|--------------|
+|:---------|:-------------|:-----------|:--------------|
 | [`tapir:snap`](tapir-snap.md) | Capture Semantics tree YAML of the running Flutter app with [ref=eN] tokens. | connected | ext.tapir.snap |
 | [`tapir:screenshot`](tapir-screenshot.md) | Capture a screenshot of the running Flutter app to a file. | connected | ext.tapir.screenshot |
 
@@ -53,7 +53,7 @@ The two foundational read commands. `tapir:snap` walks the Semantics tree and em
 Pointer-driven actions that synthesise touch, mouse, or pen events at a widget located by ref token. `tapir:tap`, `tapir:hover` and `tapir:drag` route through the actionability gate (see [Reference: Actionability gate](../reference/actionability-gate.md)) before the event leaves the VM. `tapir:scroll` skips the gate on purpose: it acts on the parent scrollable, so it can bring an off-viewport target into view (see [Intentional gate skips](../reference/actionability-gate.md#intentional-gate-skips)).
 
 | Command | Description | Boot Mode | VM Extension |
-|---------|-------------|-----------|--------------|
+|:---------|:-------------|:-----------|:--------------|
 | [`tapir:tap`](tapir-tap.md) | Tap a widget by ref token (from prior tapir:snap). | connected | ext.tapir.tap |
 | `tapir:hover` | Hover the pointer over a widget by ref token (from prior tapir:snap). | connected | ext.tapir.hover |
 | `tapir:drag` | Drag from one widget to another using ref tokens from a prior tapir:snap. | connected | ext.tapir.drag |
@@ -65,7 +65,7 @@ Pointer-driven actions that synthesise touch, mouse, or pen events at a widget l
 Keyboard-shaped actions. `tapir:type` emits a character sequence; `tapir:press_key` synthesises a single hardware-key event; `tapir:clear` empties the focused text field; `tapir:select_option` calls the `onChanged` of a `DropdownButton`; `tapir:set_checkbox` sets a checkbox, switch or radio from its Semantics checked or toggled state, behind the same actionability gate as the gesture commands.
 
 | Command | Description | Boot Mode | VM Extension |
-|---------|-------------|-----------|--------------|
+|:---------|:-------------|:-----------|:--------------|
 | `tapir:type` | Type text into a focused widget by ref token. | connected | ext.tapir.type |
 | [`tapir:fill`](tapir-fill.md) | Focus, clear, type, and settle a text field by ref in one call (retries once on a stale handle). | connected | ext.tapir.fill |
 | `tapir:press_key` | Synthesise a hardware-key event on the currently focused widget. | connected | ext.tapir.press_key |
@@ -81,7 +81,7 @@ Keyboard-shaped actions. `tapir:type` emits a character sequence; `tapir:press_k
 Route-table manipulation against the active `Navigator`. `tapir:dismiss_modals` dismisses any open modal, sheet, or dialog. `tapir:close_app` ends the session via `SystemNavigator.pop()`.
 
 | Command | Description | Boot Mode | VM Extension |
-|---------|-------------|-----------|--------------|
+|:---------|:-------------|:-----------|:--------------|
 | `tapir:navigate` | Navigate the running app to a named route via the active Navigator. | connected | ext.tapir.navigate |
 | `tapir:navigate_back` | Pop the topmost route off the active Navigator (mirrors browser back). | connected | ext.tapir.navigate_back |
 | `tapir:get_routes` | Print the mounted Router's location (`uri`), the top page name and a title hint as JSON. | connected | ext.tapir.get_routes |
@@ -95,7 +95,7 @@ Route-table manipulation against the active `Navigator`. `tapir:dismiss_modals` 
 The Playwright Locator surface: mint a re-resolvable `q<N>` handle backed by text, semanticsLabel, or key predicates. Every action call against a `q<N>` handle re-walks the live tree, so the handle survives intermediate rebuilds.
 
 | Command | Description | Boot Mode | VM Extension |
-|---------|-------------|-----------|--------------|
+|:---------|:-------------|:-----------|:--------------|
 | [`tapir:find`](tapir-find.md) | Mint a re-resolvable q-handle by text / semanticsLabel / key (Playwright Locator pattern). | connected | ext.tapir.find |
 
 <a name="diagnostics"></a>
@@ -104,7 +104,7 @@ The Playwright Locator surface: mint a re-resolvable `q<N>` handle backed by tex
 The health check for the consumer wiring and the running session. It boots with `CommandBoot.none`, so it runs before any session exists, and it dials the recorded VM Service itself, once, for what only the running app can report.
 
 | Command | Description | Boot Mode | VM Extension |
-|---------|-------------|-----------|--------------|
+|:---------|:-------------|:-----------|:--------------|
 | [`tapir:doctor`](tapir-doctor.md) | Verify tapir plugin runtime + consumer wiring health | none | `ext.tapir.boot_id`, when a session is recorded |
 
 <a name="install"></a>
@@ -113,7 +113,7 @@ The health check for the consumer wiring and the running session. It boots with 
 The one-shot bootstrap. Patches the consumer's `lib/main.dart`, then chains `dowel install` and `plugin:install tapir` on a best-effort basis; `tapir` ships its own Flutter-free CLI entry point, so the chain only adds the faster `./bin/dowel` path. Idempotent on re-run. It also lists what an earlier `fluttersdk_dusk` install left in the project; see [Migrating from fluttersdk_dusk](../getting-started/migrating-from-fluttersdk-dusk.md).
 
 | Command | Description | Boot Mode | VM Extension |
-|---------|-------------|-----------|--------------|
+|:---------|:-------------|:-----------|:--------------|
 | [`tapir:install`](tapir-install.md) | Wire TapirPlugin.install() into lib/main.dart AND chain dowel install + plugin:install so ./bin/dowel surfaces every tapir:* command (idempotent on re-run; Phase 2 chain is best-effort). | none | none |
 
 <a name="cdp"></a>
@@ -122,7 +122,7 @@ The one-shot bootstrap. Patches the consumer's `lib/main.dart`, then chains `dow
 Chrome DevTools Protocol commands that manipulate the browser viewport directly. Web target only; desktop and mobile no-op gracefully.
 
 | Command | Description | Boot Mode | VM Extension |
-|---------|-------------|-----------|--------------|
+|:---------|:-------------|:-----------|:--------------|
 | `tapir:device_profile` | Emulate a device profile (viewport + DPR + touch + user agent) via Chrome DevTools Protocol. The emulation lasts only as long as the command's CDP session, which closes on exit; only the window size stays. | none | none (CDP direct) |
 | `tapir:resize_viewport` | Resize the running Flutter web app viewport via Chrome DevTools Protocol. Chrome drops the override when the command exits; `--hold` keeps it until Ctrl-C or Chrome exits. | none | none (CDP direct) |
 
@@ -132,7 +132,7 @@ Chrome DevTools Protocol commands that manipulate the browser viewport directly.
 Pointer gestures that go beyond the primary tap. All three route through the actionability gate.
 
 | Command | Description | Boot Mode | VM Extension |
-|---------|-------------|-----------|--------------|
+|:---------|:-------------|:-----------|:--------------|
 | `tapir:double_click` | Fire a double-click at the widget identified by a snapshot ref. | connected | ext.tapir.double_click |
 | `tapir:triple_click` | Fire three primary clicks (~100ms apart) at the widget identified by --ref. | connected | ext.tapir.triple_click |
 | `tapir:right_click` | Fire a right (secondary mouse button) click at the widget identified by --ref. | connected | ext.tapir.right_click |
@@ -143,7 +143,7 @@ Pointer gestures that go beyond the primary tap. All three route through the act
 Keyboard-focus shaping. `tapir:focus` requests focus on a ref; `tapir:blur` releases the currently focused widget.
 
 | Command | Description | Boot Mode | VM Extension |
-|---------|-------------|-----------|--------------|
+|:---------|:-------------|:-----------|:--------------|
 | `tapir:focus` | Request keyboard focus on the widget identified by --ref. | connected | ext.tapir.focus |
 | `tapir:blur` | Remove keyboard focus from the currently-focused widget. | connected | ext.tapir.blur |
 
@@ -167,7 +167,7 @@ lets agents compute true before/after deltas: record the time before an action, 
 `tapir:exceptions --since=<time>` afterwards to see only exceptions raised by that action.
 
 | Command | Description | Boot Mode | VM Extension |
-|---------|-------------|-----------|--------------|
+|:---------|:-------------|:-----------|:--------------|
 | `tapir:console` | Read recent log entries (in-package debugPrint capture; augmented by crumbs when wired). | connected | ext.tapir.console |
 | `tapir:exceptions [--limit=<n>] [--since=<iso8601>]` | Read recent exception entries (in-package FlutterError capture + crumbs when wired). Optionally filter to entries strictly after `--since`. | connected | ext.tapir.exceptions |
 
@@ -177,7 +177,7 @@ lets agents compute true before/after deltas: record the time before an action, 
 The Stagehand observe-once-act-many surface. Returns a structured candidate list of every interactive widget on screen; the agent decides which refs to act on. No server-side LLM.
 
 | Command | Description | Boot Mode | VM Extension |
-|---------|-------------|-----------|--------------|
+|:---------|:-------------|:-----------|:--------------|
 | [`tapir:observe`](tapir-observe.md) | Return a structured candidate list of every interactive widget on screen (Stagehand observe-once-act-many; no server-side LLM). | connected | ext.tapir.observe |
 
 <a name="hot-reload-and-snap"></a>
@@ -186,7 +186,7 @@ The Stagehand observe-once-act-many surface. Returns a structured candidate list
 The single-round-trip composite that hot-reloads the running app and then captures snapshot, screenshot, and recent exceptions in one shot. Dispatched via the `dowel:` substrate routing prefix to avoid a same-isolate deadlock. The reload itself is a keystroke, not a VM Service `reloadSources` call: the command writes `r` to the stdin FIFO recorded in the session state and waits up to 10 seconds for the reload line in the `flutter run` log (`Reloaded N libraries in Nms`, or `Reloaded application in Nms` from the web runner; a reload of a second or more prints its time as `1,234ms`, and that matches too). A compile error prints `Try again after fixing the above error(s)` instead, and the command reports `reloaded: false` and exits `1`. A session started by `dart run tapir start` has that FIFO; one started by plain `flutter run` does not, and the command reports it as missing.
 
 | Command | Description | Boot Mode | VM Extension |
-|---------|-------------|-----------|--------------|
+|:---------|:-------------|:-----------|:--------------|
 | `tapir:hot_reload_and_snap` | Hot reload the running app, then capture snapshot + screenshot + recent exceptions in a single round-trip. | connected | `r` written to the `flutter run` stdin FIFO, then `ext.tapir.snap`, `ext.tapir.screenshot`, `ext.tapir.exceptions` |
 
 <a name="batch"></a>
@@ -195,7 +195,7 @@ The single-round-trip composite that hot-reloads the running app and then captur
 One call, several verbs. `tapir:run` takes each step as a verb line, runs them in order on the one VM connection, and prints a summary line per step plus the last step's output. Steps may be any connected-boot verb except `tapir:run` itself.
 
 | Command | Description | Boot Mode | VM Extension |
-|---------|-------------|-----------|--------------|
+|:---------|:-------------|:-----------|:--------------|
 | [`tapir:run`](tapir-run.md) | Run several tapir verbs in one call, e.g. tapir:run "tap --ref=e5" "snap --grep Counter". | connected | each step's own extension |
 
 <a name="performance"></a>
@@ -204,7 +204,7 @@ One call, several verbs. `tapir:run` takes each step as a verb line, runs them i
 One measurement session and its drill-down. `tapir:perf_begin` opens it (`--mode=attribution` profiles builds, `--mode=timing` touches no flag), you drive one interaction, `tapir:perf_end` closes it with a bounded report of ranked insights, and `tapir:perf_insight` returns the rows behind one of them. `tapir:perf_run` repeats a scenario from a clean start and writes the medians to a file, `tapir:perf_compare` judges one such file against another, and `tapir:perf_trace` writes a session's timeline for Perfetto. `tapir:perf_campaign` runs a whole campaign of scenarios, each from a cold start.
 
 | Command | Description | Boot Mode | VM Extension |
-|---------|-------------|-----------|--------------|
+|:---------|:-------------|:-----------|:--------------|
 | [`tapir:perf_begin`](tapir-perf-begin.md) | Open a performance measurement session: zero the frame, wind and magic counters and, in attribution mode, switch on build profiling. | connected | ext.tapir.perf_begin |
 | [`tapir:perf_end`](tapir-perf-end.md) | Close the performance measurement session and report frames, ranked blocks, counters and insights. | connected | ext.tapir.perf_end |
 | [`tapir:perf_insight`](tapir-perf-insight.md) | Drill into one insight of the last perf_end report: title, summary, the rows behind it, estimated savings and the next step. | connected | ext.tapir.perf_insight |
