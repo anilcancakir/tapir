@@ -398,13 +398,16 @@ const int _kNetworkIdleDefaultTimeoutMs = 5000;
 const int _kNetworkIdleDefaultIdleMs = 500;
 const int _kNetworkIdleDefaultPollIntervalMs = 200;
 
+/// The smallest poll cadence a caller may ask for (CPU constraint).
+const int _kMinPollIntervalMs = 100;
+
 /// Handler for the `ext.tapir.wait_for_network_idle` VM Service extension.
 ///
 /// Blocks (Dart-side) until [pendingHttpCountReader] has reported 0 on
 /// `ceil(idleMs / pollIntervalMs)` consecutive samples, each worth one
 /// [pollIntervalMs], or until [timeoutMs] is reached at a sample that did not
-/// complete that window. Polls every [pollIntervalMs] (minimum 100 ms
-/// enforced by [networkIdleWaitLoop]). With the defaults the window completes
+/// complete that window. Polls every [pollIntervalMs] (minimum 100 ms,
+/// refused by this handler as `invalid_param`). With the defaults the window completes
 /// after about 400 ms; the first sample counts, so a window of one poll
 /// interval or less matches on the first sample without waiting, and a window
 /// that completes at or after [timeoutMs] still matches. A request that
@@ -443,6 +446,17 @@ Future<developer.ServiceExtensionResponse> tapirWaitForNetworkIdleHandler(
     final int pollIntervalMs =
         _parseInt(params['pollIntervalMs']) ??
         _kNetworkIdleDefaultPollIntervalMs;
+
+    // 1. The floor is checked here, not only by the loop's `assert`: a build
+    //    that strips asserts (profile) would otherwise accept 0, which never
+    //    advances the elapsed counter, so the wait never ends.
+    if (pollIntervalMs < _kMinPollIntervalMs) {
+      return tapirError(
+        '[tapir] ext.tapir.wait_for_network_idle: pollIntervalMs '
+        '$pollIntervalMs is below the $_kMinPollIntervalMs ms minimum',
+        TapirErrorEnvelope.invalidParam('pollIntervalMs'),
+      );
+    }
 
     final Map<String, dynamic> result = await networkIdleWaitLoop(
       timeoutMs: timeoutMs,

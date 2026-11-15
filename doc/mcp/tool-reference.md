@@ -1736,7 +1736,7 @@ idle window (about `idleMs`).
 |:---|:---|:---|:---|
 | `timeoutMs` | integer | no | Deadline, checked after each poll sample: a window that completes at or after it still matches. Default `5000`. |
 | `idleMs` | integer | no | Window of consecutive zero samples, in milliseconds, before declaring idle. Default `500`. |
-| `pollIntervalMs` | integer | no | Poll cadence in milliseconds. Minimum `100`; default `200`. |
+| `pollIntervalMs` | integer | no | Poll cadence in milliseconds. Minimum `100`; default `200`. A smaller value is refused with an `invalid_param` error (`-32602`) before any waiting. |
 
 ### Returns
 

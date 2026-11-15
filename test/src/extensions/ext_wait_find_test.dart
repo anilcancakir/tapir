@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:tapir/src/extensions/ext_wait_find.dart';
 import 'package:tapir/src/ref_registry.dart';
+import 'package:tapir/src/utils/error_envelope.dart';
 
 Widget _wrap(Widget child) => MediaQuery(
   data: const MediaQueryData(),
@@ -265,6 +266,35 @@ void main() {
     tearDown(() {
       // Restore so cross-test pollution does not leak the test counter.
       pendingHttpCountReader = originalReader;
+    });
+
+    testWidgets('a pollIntervalMs under the 100 ms floor is refused as an '
+        'invalid_param, not looped on', (tester) async {
+      // The floor used to be an `assert`, which a profile build strips: a 0
+      // there never advanced the elapsed counter and the wait never ended.
+      counterValue = 3;
+      for (final String poll in <String>['0', '99', '-5']) {
+        final response = await tapirWaitForNetworkIdleHandler(
+          'ext.tapir.wait_for_network_idle',
+          <String, String>{
+            'timeoutMs': '5000',
+            'idleMs': '500',
+            'pollIntervalMs': poll,
+          },
+        );
+
+        expect(_isError(response), isTrue, reason: 'pollIntervalMs=$poll');
+        expect(
+          response.errorCode,
+          developer.ServiceExtensionResponse.invalidParams,
+          reason: 'pollIntervalMs=$poll',
+        );
+        expect(
+          parseEnvelopeFromErrorDetail(response.errorDetail!)!['type'],
+          'invalid_param',
+          reason: 'pollIntervalMs=$poll',
+        );
+      }
     });
 
     testWidgets('fast path: returns matched=true with idleAchievedMs when '
