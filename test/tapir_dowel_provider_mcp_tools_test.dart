@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:dowel/dowel.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -670,6 +671,66 @@ void main() {
         expect(description, contains('Text'), reason: key);
         expect(description, isNot(contains('Semantics node')), reason: key);
       }
+    });
+
+    test(
+      'tapir_wait_for_network_idle describes the idle window and the deadline '
+      'as the loop behaves, in the words of the tool reference page',
+      () {
+        final wait = tools.firstWhere(
+          (t) => t.name == 'tapir_wait_for_network_idle',
+        );
+        final properties =
+            wait.inputSchema['properties'] as Map<String, dynamic>;
+        final timeoutMs =
+            (properties['timeoutMs'] as Map<String, dynamic>)['description']
+                as String;
+
+        // The deadline sentence is the same on the descriptor and the page.
+        const deadline =
+            'Deadline, checked after each poll sample: a window that '
+            'completes at or after it still matches.';
+        const window =
+            'The loop matches after `ceil(idleMs / pollIntervalMs)` '
+            'consecutive zero samples, each worth one `pollIntervalMs`. With '
+            'the defaults the window completes after about 400 ms; the first '
+            'sample counts, so a window of one poll interval or less matches '
+            'on the first sample without waiting. A request that starts and '
+            'finishes between two samples is not seen. Only a `timeoutMs` '
+            'reached before that (200 or less with the defaults) is a '
+            'timeout.';
+        const zeroCount =
+            'The count is zero unless an adapter or a reader the app '
+            'installs reports one (`pendingHttpCountReader`; '
+            '`MagicHttpFacadeAdapter` from `magic_devtools` is one), and a '
+            'zero count matches after one idle window (about `idleMs`).';
+        final page = File('doc/mcp/tool-reference.md').readAsStringSync();
+        final flatPage = page.replaceAll('\n', ' ');
+
+        expect(timeoutMs, startsWith(deadline));
+        expect(timeoutMs, isNot(contains('Maximum total wait time')));
+        expect(wait.description, contains(window));
+        expect(wait.description, contains(zeroCount));
+        expect(wait.description, isNot(contains('immediately')));
+        expect(wait.description, isNot(contains('constantly 0')));
+        expect(page, contains(deadline));
+        expect(flatPage, contains(window));
+        expect(flatPage, contains(zeroCount));
+      },
+    );
+
+    test('tapir_wait_for_network_idle names the adapter that counts', () {
+      final wait = tools.firstWhere(
+        (t) => t.name == 'tapir_wait_for_network_idle',
+      );
+
+      // MagicHttpFacadeAdapter lives in magic_devtools, not in crumbs.
+      expect(
+        wait.description,
+        contains('`MagicHttpFacadeAdapter.pendingCount`'),
+      );
+      expect(wait.description, contains('magic_devtools'));
+      expect(wait.description, isNot(contains("crumbs's `MagicHttp")));
     });
 
     test('the click variants say their snapshot default is true', () {

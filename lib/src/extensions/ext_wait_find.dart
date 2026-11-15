@@ -44,9 +44,9 @@ void registerWaitFindExtensions() {
 /// Reader for the live in-flight HTTP request count.
 ///
 /// Defaults to a function that returns 0 so tapir runs without any HTTP
-/// observation layer wired up (the missing-crumbs graceful path: the
-/// network is treated as continuously idle, so `wait_for_network_idle`
-/// returns immediately).
+/// observation layer wired up (the network is treated as continuously idle,
+/// so `wait_for_network_idle` matches after one idle window). An app can
+/// replace it with its own request counter; crumbs is one option.
 ///
 /// Hosts that ship `crumbs` wire the real source by writing:
 ///
@@ -400,14 +400,21 @@ const int _kNetworkIdleDefaultPollIntervalMs = 200;
 
 /// Handler for the `ext.tapir.wait_for_network_idle` VM Service extension.
 ///
-/// Blocks (Dart-side) until [pendingHttpCountReader] reports 0 for a
-/// continuous window of [idleMs], or until [timeoutMs] elapses. Polls every
-/// [pollIntervalMs] (minimum 100 ms enforced by [networkIdleWaitLoop]).
+/// Blocks (Dart-side) until [pendingHttpCountReader] has reported 0 on
+/// `ceil(idleMs / pollIntervalMs)` consecutive samples, each worth one
+/// [pollIntervalMs], or until [timeoutMs] is reached at a sample that did not
+/// complete that window. Polls every [pollIntervalMs] (minimum 100 ms
+/// enforced by [networkIdleWaitLoop]). With the defaults the window completes
+/// after about 400 ms; the first sample counts, so a window of one poll
+/// interval or less matches on the first sample without waiting, and a window
+/// that completes at or after [timeoutMs] still matches. A request that
+/// starts and finishes between two samples is not seen.
 ///
 /// Params (all string-valued):
-/// - `timeoutMs` (optional, default 5000): hard ceiling on the wait.
-/// - `idleMs` (optional, default 500): continuous-zero window the loop must
-///   observe before declaring idle.
+/// - `timeoutMs` (optional, default 5000): deadline, checked after each poll
+///   sample that did not complete the window.
+/// - `idleMs` (optional, default 500): window of consecutive zero samples, in
+///   milliseconds, before declaring idle.
 /// - `pollIntervalMs` (optional, default 200): poll cadence; must be >= 100.
 ///
 /// Success response:
@@ -419,9 +426,11 @@ const int _kNetworkIdleDefaultPollIntervalMs = 200;
 /// structured envelope `{type: "timeout", suggestions: []}` carrying the
 /// max in-flight count observed during the wait window inside `message`.
 ///
-/// Missing-crumbs graceful path: when the host has not overridden
-/// [pendingHttpCountReader] the default `() => 0` makes the loop satisfy
-/// `idleMs` on the very first poll, returning `matched: true` immediately.
+/// The count is zero unless an adapter or a reader the app installs reports
+/// one: with the default `() => 0` of [pendingHttpCountReader] every sample is
+/// a zero, so the call returns `matched: true` after one idle window (about
+/// `idleMs`; on the first sample when `idleMs` is no larger than
+/// [pollIntervalMs]).
 Future<developer.ServiceExtensionResponse> tapirWaitForNetworkIdleHandler(
   String method,
   Map<String, String> params,
