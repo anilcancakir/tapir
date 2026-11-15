@@ -33,7 +33,7 @@ dart run tapir tapir:fill --ref=<eN|qN> --text=<value>
 ## Arguments
 
 | Option | Type | Default | Required | Description |
-|--------|------|---------|----------|-------------|
+|:--------|:------|:---------|:----------|:-------------|
 | `--ref` | string | (none) | yes (`mandatory: true`) | Text-field ref token (`e1` from a prior `tapir:snap`, or `q1` from a prior `tapir:find`). Empty values trigger a CLI-side error with exit code `1` before the VM Service call. |
 | `--text` | string | (none) | yes (`mandatory: true`) | Value to set. Replaces existing content. Pass an empty string to clear the field. |
 | `--includeSnapshot` | flag | `false` | no | Embed the post-fill snapshot YAML in the response. |
@@ -47,7 +47,7 @@ dart run tapir tapir:fill --ref=<eN|qN> --text=<value>
 ## Returns
 
 | Exit code | Meaning |
-|-----------|---------|
+|:-----------|:---------|
 | `0` | Field filled. Emits `Filled <ref>` (default) or the full JSON envelope when `--includeSnapshot` or `--json` is set. |
 | `1` | `--ref` or `--text` was missing (CLI-side guard fires before the VM Service call); OR, in the one-line mode, `effect.verified` came back `false`. |
 | non-zero | VM Service handler returned an error: ref not found, actionability gate failure, no editable under the ref, or a stale handle that did not recover on retry. |

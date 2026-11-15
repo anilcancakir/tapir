@@ -28,7 +28,7 @@ dart run tapir tapir:perf_compare <a.json> <b.json> [--json]
 Every metric is one where higher is worse. Per metric:
 
 | Change (B against A) | Verdict |
-|---|---|
+|:---|:---|
 | inside either run's own repeat-to-repeat range (`summary.spread`) | `unchanged`: the repeats produce that much by themselves |
 | at or above `error` percent | `regressed`, severity `error` |
 | at or above `warn` percent | `regressed`, severity `warn` |
@@ -62,7 +62,7 @@ The default output is a compact table: the verdict and thresholds, the painted f
 ```
 
 | Exit code | Meaning |
-|-----------|---------|
+|:-----------|:---------|
 | `0` | No error-level regression (a warn is reported, not failed). |
 | `1` | An error-level regression, a missing argument or file, or a run with no measured repeat (every one refused). |
 

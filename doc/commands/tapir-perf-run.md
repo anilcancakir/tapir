@@ -25,7 +25,7 @@ dart run tapir tapir:perf_run <scenario.yaml> [--variant=<key>] [--label=<name>]
 `tapir:perf_run` requires a running session (`CommandBoot.connected`). On Chrome it also needs the CDP port `dowel start --cdp-port` records: every session is brought to front first, and viewport, resize and wheel go through DevTools.
 
 | Flag | Default | Meaning |
-|------|---------|---------|
+|:------|:---------|:---------|
 | `<scenario.yaml>` / `--scenario` | required | The scenario file. |
 | `--variant` | none | The [variant](#variants) to run. Required when the file declares `variants` (the error lists the keys), refused when it does not. It applies to `--against` too, so both files have to declare it. |
 | `--label` | `run` | Names the run in the file name. `[a-z0-9_-]` only; anything else is rejected. |
@@ -70,7 +70,7 @@ Setup takes `hot_restart`, `navigate`, `wait_for_text` and `wait_for_network_idl
 A target is resolved on the live screen in every repeat, never written as a ref: an `e12` from one run is stale after the next navigate, and the file is rejected if it names one. A target only `wait` steps precede (on the platform the run is on) is resolved before `perf_begin`, a `wheel`'s hover point with it, so the lookup costs the window nothing. Every other target could be created or moved by an earlier step (the `English` option in the overlay a tap opens), so it is resolved inside the window, right before its step, and the run file records that cost. A target not there yet is looked up again every 100 ms for up to 3 s before the run fails with "matched nothing". Exactly one of:
 
 | Target | Resolves through |
-|---|---|
+|:---|:---|
 | `{text: ...}` | `ext.tapir.find --text`; with `index > 0`, the `index`-th of `ext.tapir.find_by_text` |
 | `{label: ...}` | `ext.tapir.find --semanticsLabel`; no `index` (nothing can serve one: name the control as `{role, name, index}` instead) |
 | `{role: ..., name: ...}` | the `index`-th `ext.tapir.observe` candidate with that role whose label is `name`: what `tapir:snap` prints as `- button "Add monitor"`. Roles are snap's: `button`, `textbox`, `checkbox`, `link`, `heading`, `image` |
@@ -125,7 +125,7 @@ The run file's `scenario.setup` echoes each guard once, as `when`, on the first 
 Every scalar value in a scenario or fragment file (never a key) is interpolated once, in its own file:
 
 | Written | Reads |
-|---|---|
+|:---|:---|
 | `${name}` | the fragment's param `name` |
 | `${env.NAME}` | the environment variable `NAME` |
 | `$$` | one literal `$` |
@@ -229,7 +229,7 @@ Actions are called with `includeSnapshot: false`: a snapshot per step would buil
 A refused repeat (the engine drew one frame or none, see `tapir:perf_end`) is kept in `repeats[]` with `refused: true` and left out of every median; `summary.refused` counts them.
 
 | Exit code | Meaning |
-|-----------|---------|
+|:-----------|:---------|
 | `0` | At least one attribution repeat was measured. |
 | `1` | A bad input (scenario, label, repeat, platform), a setup or step that could not run (the session is still closed, so the profiling flags are restored), or every attribution repeat refused. The file is still written in the last case. |
 
@@ -248,7 +248,7 @@ The file gains `semanticsPass: "measured"` and `semanticsOff: {summary, repeats}
 A release does not always turn the tree off. The framework builds it while any handle is held, and the platform holds its own while `platformDispatcher.semanticsEnabled` is true. When the release answers `semanticsEnabled: true` the pass stops there: it closes that window, re-acquires, records `semanticsPass: "unsupported"` and writes no `semanticsOff` series, since what it would measure is the attribution series again. The `semanticsPassReason` names the platform and what holds semantics on:
 
 | Where | What holds it | `semanticsPassReason` |
-|---|---|---|
+|:---|:---|:---|
 | chrome | The web engine turns semantics on at the first semantics tree a real app sends (tapir's first snapshot sends one) and never turns it off. | `on chrome, releasing tapir's semantics handle left semantics on: the platform holds it: Flutter web's engine ...` |
 | android, ios | An accessibility service (TalkBack, VoiceOver, another assistive service). | `on android, ... an accessibility service ... is on; turn it off and rerun.` |
 | any | A `SemanticsHandle` the app or a package took with `ensureSemantics`. | `on <platform>, ... another semantics handle in the app holds it ...` |
