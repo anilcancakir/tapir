@@ -44,7 +44,7 @@ dart run tapir mcp:install          # writes the `dowel` entry into .mcp.json
 7. **Branch on the reason substring, never on the full message.**
 
    | Substring | Meaning | Next move |
-   |---|---|---|
+   |:---|:---|:---|
    | `defunct` (`element no longer mounted` or `element no longer attached to a render object`, both frozen text) | The node left the tree | Re-snap and pick the ref again |
    | `not enabled` | Semantics `isEnabled` is false | Change the state that disables it; a retry fails the same way |
    | `zero rect` | Width or height is 0, layout pending | `tapir_wait_for` on content, then retry |
@@ -140,7 +140,7 @@ In CI, drive the app with the CLI and chain on exit codes (rule 17).
 ## References
 
 | Read when | File |
-|---|---|
+|:---|:---|
 | Calling a `tapir_*` tool and you need its parameters, return shape or errors | `${CLAUDE_SKILL_DIR}/references/mcp-tools.md` |
 | Running a `tapir:*` command from Bash: flags, output, exit codes | `${CLAUDE_SKILL_DIR}/references/cli-commands.md` |
 | An action failed the gate, a ref went stale, or the error envelope needs parsing | `${CLAUDE_SKILL_DIR}/references/actionability-and-refs.md` |

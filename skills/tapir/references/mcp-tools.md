@@ -38,7 +38,7 @@ An error is a JSON string with the human message and a machine envelope:
 Keys any success payload can carry:
 
 | Key | Meaning |
-|---|---|
+|:---|:---|
 | `framesForced: true` | A hidden or paused app was woken for this call. Normal. Not done by the perf verbs, `console`, `exceptions`, `close_app` and `evaluate`; `--dart-define=TAPIR_FORCE_FRAMES=false` turns it off. |
 | `warnings: {framesEnabled, lifecycleState, platform, hint}` | The app is not producing frames and could not be woken (a hidden browser tab, the opt-out, a `detached` app). The result cannot be trusted; follow `hint` and retry. Absent on a healthy engine. |
 | `reresolved: ["e5"]` | A stale `e<N>` was relocated by label to the control that replaced it. |
@@ -52,7 +52,7 @@ The `snapshot` parameter (`full`, `diff`, `none`) overrides `includeSnapshot` on
 ### tapir_snap
 
 | Param | Type | Default | Note |
-|---|---|---|---|
+|:---|:---|:---|:---|
 | `depth` | integer | full tree | Maximum depth from the root |
 | `within` | string | whole tree | `e<N>` of the subtree to walk; a `q<N>` is not accepted, an unknown ref is an error |
 | `interactiveOnly` | boolean | false | Only ref-bearing nodes, no `- text` lines |
@@ -64,7 +64,7 @@ Returns `{ snapshot: "<yaml>", groupId }`. A node line is `- <role> "<label>" [r
 ### tapir_observe
 
 | Param | Type | Default | Note |
-|---|---|---|---|
+|:---|:---|:---|:---|
 | `intent` | string | none | Your own note; not used by the handler |
 | `roles` | string | all | Comma list of `button`, `textbox`, `link`, `checkbox`, `heading`, `image` |
 | `limit` | integer | 50 | Candidate cap |
@@ -75,7 +75,7 @@ Returns `{ candidates: [{ ref, role, label, value, bounds, isEnabled, isVisible,
 ### tapir_screenshot
 
 | Param | Type | Default | Note |
-|---|---|---|---|
+|:---|:---|:---|:---|
 | `ref` | string | whole viewport | Capture only this widget (`e<N>` or `q<N>`) |
 | `rect` | string | ref bounds | `"x,y,w,h"` relative to the ref; without `ref` it is an error |
 | `format` | string | `jpeg` | `jpeg` or `png` |
@@ -88,7 +88,7 @@ Returns `{ format, base64, width, height }`. Prefer `ref`: a full tall page cost
 ### tapir_find
 
 | Param | Type | Note |
-|---|---|---|
+|:---|:---|:---|
 | `text` | string | Exact match on the accessibility label, then `Text.data` |
 | `contains` | string | Case-sensitive substring of the same; for dynamic labels |
 | `semanticsLabel` | string | Exact match on `SemanticsNode.label` only |
@@ -102,7 +102,7 @@ At least one of the first four; `within` alone is refused. Predicates are not al
 All run the actionability gate and accept `snapshot`, `includeSnapshot` (default true), `checkStable` and `checkReceivesEvents` (default true).
 
 | Tool | Params | Returns | Gesture |
-|---|---|---|---|
+|:---|:---|:---|:---|
 | `tapir_tap` | `ref`, `retarget` (default true), `until`, `untilTimeoutMs` (default 3000) | `{ ref, effect: {kind: "treeChanged", changed}, untilMatched?, retargeted?, tapPointOutsideOwner? }` | Down, 50ms, Up at the live centre, re-read after the gate |
 | `tapir_double_click` | `ref` | `{ ref }` | Two taps about 100ms apart, one gate |
 | `tapir_right_click` | `ref` | `{ ref, button: "right" }` | Secondary mouse button |
@@ -151,7 +151,7 @@ All run the actionability gate and accept `snapshot`, `includeSnapshot` (default
 ### tapir_scroll
 
 | Param | Type | Default | Note |
-|---|---|---|---|
+|:---|:---|:---|:---|
 | `ref` | string | first `Scrollable` | A widget inside the scrollable to drive |
 | `direction` | string | `down` | `up`, `down`, `left`, `right` |
 | `pixels` | number | 300 | Distance for `direction` |

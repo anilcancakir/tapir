@@ -15,7 +15,7 @@ Every `tapir:*` command `TapirDowelProvider.commands()` registers, run from a sh
 ## Entry points
 
 | Form | When |
-|---|---|
+|:---|:---|
 | `./bin/dowel <cmd>` | The default once `tapir:install` built it: an AOT binary that rebuilds itself when stale |
 | `dart run tapir <cmd>` | Before `./bin/dowel` exists; loads the tapir commands itself, slower to start |
 
@@ -35,7 +35,7 @@ Default output depends on the verb:
 Exit `0` is success and `1` is failure, including the verdicts a summary would hide:
 
 | Command | Exits 1 when |
-|---|---|
+|:---|:---|
 | `tapir:wait_for`, `tapir:wait_for_network_idle` | The condition never resolved |
 | `tapir:fill`, `tapir:type` | `effect.verified` is false (the summary names what the field holds); `--json` and `--includeSnapshot` print the response and exit 0 |
 | `tapir:set_checkbox` | `effect.verified` is false (the summary names the value read back); `--json` and `--includeSnapshot` print the response and exit 0 |
@@ -52,7 +52,7 @@ On web with a `cdpPort` in the session, `snap`, `observe`, `tap`, `fill`, `type`
 ## Shared flags
 
 | Flag | Default | On |
-|---|---|---|
+|:---|:---|:---|
 | `--ref=<eN or qN>` | required | The ref-taking verbs |
 | `--[no-]checkStable`, `--[no-]checkReceivesEvents` | on | `tap`, `double_click`, `right_click`, `triple_click`, `hover`, `drag`, `type`, `fill`, `set_checkbox` |
 | `--includeSnapshot` | off (the MCP tools default it on) | The action verbs; prints the envelope with the post-action snapshot |

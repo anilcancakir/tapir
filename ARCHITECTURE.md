@@ -40,7 +40,7 @@ shell ──tapir:* command ▶ bin/tapir.dart ───┴─ VM Service ─▶
 ## Invariants
 
 | Rule | Why | Verify |
-|------|-----|--------|
+|:------|:-----|:--------|
 | Host-half files import no Flutter and no `dart:ui` | `dart run tapir` runs them on the plain VM, where `dart:ui` does not exist | `rg -n -e "^import 'package:flutter" -e "^import 'dart:ui" bin lib/cli.dart lib/src/commands lib/src/perf lib/src/cdp lib/src/cli_args.dart lib/src/tapir_dowel_provider.dart lib/src/utils/chrome_reaper.dart` prints nothing, and `dart run bin/tapir.dart --help` starts |
 | `extensions/` and `utils/` import nothing from `commands/`, `perf/` or `cdp/` | The in-app half must stay loadable without the host half | `rg -n -e "^import '[^']*/commands/" -e "^import '[^']*/perf/" -e "^import '[^']*/cdp/" lib/src/extensions lib/src/utils lib/src/tapir_plugin.dart lib/src/ref_registry.dart` prints nothing |
 | No `endOfFrame` await is unbounded | A hidden window or tab turns `framesEnabled` off, a bare await never completes, and the CLI times out with no output and no error | `rg -nP "^\s*(?!//)[^/]*\bendOfFrame\b(?!\s*\.timeout)" lib --glob '*.dart'` prints nothing |
@@ -91,7 +91,7 @@ Hot reload:
 ## Decisions
 
 | Decision | Why | Rejected alternatives | Status |
-|----------|-----|-----------------------|--------|
+|:----------|:-----|:-----------------------|:--------|
 | The snapshot baseline lives in `ext_snapshot.dart` module state | The `RefRegistry` surface is frozen, and a filtered snap never records it | A field on `RefRegistry` | Active |
 | Gate step 5 proceeds on `indeterminate` and reports `overlapCandidates` | On Flutter Web, DWDS pipes hit tests through a snapshot view that does not mirror the live subtree, so the path can hold only the root render view; refusing would break every valid web tap | Refusing on an empty or root-only path | Active |
 | An `observe` handle carries `TapirQuery.matchIndex`; `find` answers the first match and reports the total | An `observe` predicate is derived from a node the walk already holds, so without an index every namesake resolves to the first; a `find` predicate is chosen, so the next move belongs to the caller | Resolving by label alone | Active |
@@ -101,7 +101,7 @@ Hot reload:
 ## Change guide
 
 | To change | Touch | Also check |
-|-----------|-------|------------|
+|:-----------|:-------|:------------|
 | The snapshot line format or a merged-node rule | `ext_snapshot.dart`, `ext_observe.dart` | They list nodes in separate walks, so a rule in one needs the other; `utils/snapshot_diff.dart` parses the `[ref=eN]` lines; both print `tapOwner` through `tapOwnerBounds` in `utils/tap_owner.dart` |
 | Which field a ref writes | `ext_text_input.dart` | `ext_fill.dart` shares `resolveTextFieldTarget` and `refuseNonTextRef` |
 | A gate precondition or the hit probe | `utils/actionability_gate.dart`, `utils/viewport_visibility.dart` | `probeHitAt` also feeds `ext_snapshot.dart` (`[occluded]`), `ext_observe.dart` (`occluded`) and `tap_owner.dart`; both `defunct` reasons are frozen text, like the others |
