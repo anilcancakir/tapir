@@ -130,7 +130,7 @@ Flag names match the MCP parameter names (`--timeoutMs`, not `--timeout`), excep
 ./bin/dowel tapir:wait_for_network_idle --idleMs=800 --timeoutMs=8000 --pollIntervalMs=200
 ```
 
-`wait_for_network_idle` reads the in-flight count through `pendingHttpCountReader`, which an app wires to the separate `crumbs` package (`() => CrumbsStore.pendingHttpCount`) with an HTTP adapter that implements `pendingCount` (an interceptor that only calls `CrumbsStore.recordHttp` counts nothing); until both are in place the count is always 0, so it succeeds after one idle window (about `idleMs`). `timeoutMs` is checked only after a poll sample, so a window that completes at or after `timeoutMs` still succeeds, and a timeout needs `timeoutMs` to run out before the window completes (200 ms or less with the defaults); either way assume it always reports idle.
+`wait_for_network_idle` reads the in-flight count through `pendingHttpCountReader`, which an app wires to the separate `crumbs` package (`() => CrumbsStore.pendingHttpCount`) with an HTTP adapter that implements `pendingCount` (an interceptor that only calls `CrumbsStore.recordHttp` counts nothing); until both are in place the count is always 0, so it succeeds after `ceil(idleMs / pollIntervalMs)` consecutive zero samples (about `idleMs`; the first sample counts, and a request that starts and finishes between two samples is not seen). `timeoutMs` is checked only after a poll sample, so a window that completes at or after `timeoutMs` still succeeds, and a timeout needs `timeoutMs` to run out before the window completes (200 ms or less with the defaults); either way assume it always reports idle.
 
 ### Navigation and overlays
 
