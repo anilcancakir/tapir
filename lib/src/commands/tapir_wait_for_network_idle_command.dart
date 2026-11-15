@@ -8,10 +8,10 @@ import 'json_output.dart';
 /// in-flight HTTP requests for a contiguous [idleMs] window.
 ///
 /// Wraps the `ext.tapir.wait_for_network_idle` VM Service extension. The
-/// Dart-side poll loop reads through `CrumbsStore.pendingHttpCount` when
-/// `crumbs` is wired (host sets `pendingHttpCountReader`);
-/// otherwise the count is constantly 0 and the call returns after one idle
-/// window, about [idleMs] (missing-crumbs graceful path).
+/// Dart-side poll loop reads `pendingHttpCountReader`, which the host can set
+/// to its own request counter or to `CrumbsStore.pendingHttpCount`. The count
+/// is zero unless an adapter or a reader the app installs reports one, and a
+/// zero count matches after one idle window, about [idleMs].
 class TapirWaitForNetworkIdleCommand extends DowelCommand {
   @override
   String get name => 'tapir:wait_for_network_idle';

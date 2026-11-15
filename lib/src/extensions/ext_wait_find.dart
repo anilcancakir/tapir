@@ -44,9 +44,9 @@ void registerWaitFindExtensions() {
 /// Reader for the live in-flight HTTP request count.
 ///
 /// Defaults to a function that returns 0 so tapir runs without any HTTP
-/// observation layer wired up (the missing-crumbs graceful path: the
-/// network is treated as continuously idle, so `wait_for_network_idle`
-/// returns immediately).
+/// observation layer wired up (the network is treated as continuously idle,
+/// so `wait_for_network_idle` matches after one idle window). An app can
+/// replace it with its own request counter; crumbs is one option.
 ///
 /// Hosts that ship `crumbs` wire the real source by writing:
 ///
@@ -404,10 +404,11 @@ const int _kNetworkIdleDefaultPollIntervalMs = 200;
 /// `ceil(idleMs / pollIntervalMs)` consecutive samples, each worth one
 /// [pollIntervalMs], or until [timeoutMs] is reached at a sample that did not
 /// complete that window. Polls every [pollIntervalMs] (minimum 100 ms
-/// enforced by [networkIdleWaitLoop]). The first sample already counts, so
-/// with nothing in flight and the defaults the call matches at about 400 ms,
-/// and a window that completes at or after [timeoutMs] still matches. A
-/// request that starts and finishes between two samples is not seen.
+/// enforced by [networkIdleWaitLoop]). With the defaults the window completes
+/// after about 400 ms; the first sample counts, so a window of one poll
+/// interval or less matches on the first sample without waiting, and a window
+/// that completes at or after [timeoutMs] still matches. A request that
+/// starts and finishes between two samples is not seen.
 ///
 /// Params (all string-valued):
 /// - `timeoutMs` (optional, default 5000): deadline, checked after each poll
@@ -425,10 +426,11 @@ const int _kNetworkIdleDefaultPollIntervalMs = 200;
 /// structured envelope `{type: "timeout", suggestions: []}` carrying the
 /// max in-flight count observed during the wait window inside `message`.
 ///
-/// Missing-crumbs graceful path: when the host has not overridden
-/// [pendingHttpCountReader] the default `() => 0` makes every sample a zero,
-/// so the call returns `matched: true` after one idle window (about
-/// `idleMs`), not at once.
+/// The count is zero unless an adapter or a reader the app installs reports
+/// one: with the default `() => 0` of [pendingHttpCountReader] every sample is
+/// a zero, so the call returns `matched: true` after one idle window (about
+/// `idleMs`; on the first sample when `idleMs` is no larger than
+/// [pollIntervalMs]).
 Future<developer.ServiceExtensionResponse> tapirWaitForNetworkIdleHandler(
   String method,
   Map<String, String> params,

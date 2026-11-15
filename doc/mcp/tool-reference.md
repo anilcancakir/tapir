@@ -1725,8 +1725,10 @@ three keys the call errors; with several it uses the first of `text`, `textGone`
 Dispatch: `ext.tapir.wait_for_network_idle`
 
 Wait until the running app reports zero in-flight HTTP requests on consecutive samples for
-`idleMs`. Playwright `waitForLoadState` network-idle semantics. Missing-crumbs graceful:
-returns idle after one idle window (about `idleMs`) when crumbs is not set up.
+`idleMs`. Playwright `waitForLoadState` network-idle semantics. The count is zero unless an
+adapter or a reader the app installs reports one (`pendingHttpCountReader`;
+`MagicHttpFacadeAdapter` from `magic_devtools` is one), and a zero count matches after one
+idle window (about `idleMs`).
 
 ### Input schema
 
@@ -1742,9 +1744,9 @@ Success: `{ matched: true, idleAchievedMs: <int> }`.
 
 Error on timeout: structured error envelope `{ type: "timeout", message: "max in-flight
 count observed: <int>" }`. The loop matches after `ceil(idleMs / pollIntervalMs)`
-consecutive zero samples, each worth one `pollIntervalMs`; the first sample already counts, so
-with nothing in flight and the defaults it matches at about 400 ms, and on the first sample
-when `idleMs` is no larger than `pollIntervalMs`. A request that starts and finishes between
+consecutive zero samples, each worth one `pollIntervalMs`. With the defaults the window
+completes after about 400 ms; the first sample counts, so a window of one poll interval or
+less matches on the first sample without waiting. A request that starts and finishes between
 two samples is not seen. Only a `timeoutMs` reached before that (200 or less with the
 defaults) is a timeout.
 
