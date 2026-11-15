@@ -400,14 +400,20 @@ const int _kNetworkIdleDefaultPollIntervalMs = 200;
 
 /// Handler for the `ext.tapir.wait_for_network_idle` VM Service extension.
 ///
-/// Blocks (Dart-side) until [pendingHttpCountReader] reports 0 for a
-/// continuous window of [idleMs], or until [timeoutMs] elapses. Polls every
-/// [pollIntervalMs] (minimum 100 ms enforced by [networkIdleWaitLoop]).
+/// Blocks (Dart-side) until [pendingHttpCountReader] has reported 0 on
+/// `ceil(idleMs / pollIntervalMs)` consecutive samples, each worth one
+/// [pollIntervalMs], or until [timeoutMs] is reached at a sample that did not
+/// complete that window. Polls every [pollIntervalMs] (minimum 100 ms
+/// enforced by [networkIdleWaitLoop]). The first sample already counts, so
+/// with nothing in flight and the defaults the call matches at about 400 ms,
+/// and a window that completes at or after [timeoutMs] still matches. A
+/// request that starts and finishes between two samples is not seen.
 ///
 /// Params (all string-valued):
-/// - `timeoutMs` (optional, default 5000): hard ceiling on the wait.
-/// - `idleMs` (optional, default 500): continuous-zero window the loop must
-///   observe before declaring idle.
+/// - `timeoutMs` (optional, default 5000): deadline, checked after each poll
+///   sample that did not complete the window.
+/// - `idleMs` (optional, default 500): window of consecutive zero samples, in
+///   milliseconds, before declaring idle.
 /// - `pollIntervalMs` (optional, default 200): poll cadence; must be >= 100.
 ///
 /// Success response:
@@ -420,8 +426,9 @@ const int _kNetworkIdleDefaultPollIntervalMs = 200;
 /// max in-flight count observed during the wait window inside `message`.
 ///
 /// Missing-crumbs graceful path: when the host has not overridden
-/// [pendingHttpCountReader] the default `() => 0` makes the loop satisfy
-/// `idleMs` on the very first poll, returning `matched: true` immediately.
+/// [pendingHttpCountReader] the default `() => 0` makes every sample a zero,
+/// so the call returns `matched: true` after one idle window (about
+/// `idleMs`), not at once.
 Future<developer.ServiceExtensionResponse> tapirWaitForNetworkIdleHandler(
   String method,
   Map<String, String> params,

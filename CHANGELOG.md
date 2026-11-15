@@ -8,6 +8,11 @@ This project follows [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+
+- **The `tapir_wait_for_network_idle` tool description, the `tapir:wait_for_network_idle` help and the tool reference describe the wait as the loop behaves.** The call matches after `ceil(idleMs / pollIntervalMs)` consecutive zero samples, the first sample already counting, so the defaults match at about 400 ms; `timeoutMs` is checked after a sample that did not complete the window, so a window that completes at or after it still matches; a request that starts and finishes between two samples is not seen. They no longer say it returns "immediately" without crumbs or that `timeoutMs` is the maximum total wait. (`lib/src/tapir_dowel_provider.dart`, `lib/src/commands/tapir_wait_for_network_idle_command.dart`, `doc/mcp/tool-reference.md`)
+- **The same description names the adapter that counts.** `MagicHttpFacadeAdapter.pendingCount` comes from `magic_devtools`, not from crumbs. (`lib/src/tapir_dowel_provider.dart`)
+
 ## [1.0.0] - 2026-11-14
 
 ### Added

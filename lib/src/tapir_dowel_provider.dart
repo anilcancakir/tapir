@@ -1129,13 +1129,18 @@ class TapirDowelProvider extends DowelServiceProvider {
           'Wait until the running app reports zero in-flight HTTP '
           'requests for a contiguous idleMs window.\n'
           '\n'
-          'Polls the host\'s in-flight HTTP counter (wired by '
-          'crumbs\'s `MagicHttpFacadeAdapter.pendingCount` '
-          'when both packages are present) every `pollIntervalMs` ms. '
-          'When the counter reaches 0 a continuous-zero countdown of '
-          '`idleMs` starts; any spike back to a positive count fully '
-          'resets the accumulator (Playwright `waitForLoadState` '
-          'network-idle semantics). On success returns '
+          'Polls the host\'s in-flight HTTP counter (moved by '
+          '`MagicHttpFacadeAdapter.pendingCount` from `magic_devtools` '
+          'when crumbs and magic_devtools are both wired) every '
+          '`pollIntervalMs` ms. The loop matches after '
+          '`ceil(idleMs / pollIntervalMs)` consecutive zero samples, each '
+          'worth one `pollIntervalMs`; the first sample already counts, so '
+          'with nothing in flight and the defaults it matches at about '
+          '400 ms, and on the first sample when `idleMs` is no larger than '
+          '`pollIntervalMs`. A request that starts and finishes between two '
+          'samples is not seen. Only a `timeoutMs` reached before that '
+          '(200 or less with the defaults) is a timeout. A positive sample '
+          'resets the count. On success returns '
           '`{matched: true, idleAchievedMs: <int>}`; on timeout returns '
           'a structured error envelope with `type: "timeout"` and the '
           'max in-flight count observed inside the wire `message` field.\n'
@@ -1149,8 +1154,8 @@ class TapirDowelProvider extends DowelServiceProvider {
           'the loading affordance is not Semantically labelled.\n'
           '- Missing-crumbs graceful: when the host has not wired '
           'crumbs the counter is constantly 0 and the call returns '
-          'idle immediately, so callers do not need to branch on the '
-          'host\'s install state.\n'
+          'idle after one idle window (about `idleMs`), so callers do not '
+          'need to branch on the host\'s install state.\n'
           '- `pollIntervalMs` must be >= 100ms (CPU constraint); the '
           'handler asserts this internally.\n'
           '\n'
@@ -1161,13 +1166,13 @@ class TapirDowelProvider extends DowelServiceProvider {
           'timeoutMs': <String, dynamic>{
             'type': 'integer',
             'description':
-                'Maximum total wait time in milliseconds. '
-                'Default 5000.',
+                'Deadline, checked after each poll sample: a window that '
+                'completes at or after it still matches. Default 5000.',
           },
           'idleMs': <String, dynamic>{
             'type': 'integer',
             'description':
-                'Contiguous-zero window the loop must observe '
+                'Window of consecutive zero samples, in milliseconds, '
                 'before declaring idle. Default 500.',
           },
           'pollIntervalMs': <String, dynamic>{

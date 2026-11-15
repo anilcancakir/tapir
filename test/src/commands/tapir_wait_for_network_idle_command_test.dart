@@ -55,6 +55,15 @@ void main() {
       );
     });
 
+    test('--timeoutMs help says the deadline is checked after a sample', () {
+      final parser = ArgParser();
+      TapirWaitForNetworkIdleCommand().configure(parser);
+      final help = parser.options['timeoutMs']!.help!;
+
+      expect(help, contains('checked after each poll sample'));
+      expect(help, isNot(contains('Maximum total wait time')));
+    });
+
     test('handle calls ext.tapir.wait_for_network_idle', () async {
       final ctx = _StubContext(
         input: MapInput(const {}),
