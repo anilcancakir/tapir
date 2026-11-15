@@ -111,7 +111,7 @@ either, both, or neither depending on your stack.
 | Integration | Package | Enrichment |
 |:------------|:--------|:-----------|
 | `MagicTapirIntegration.install()` | `magic_devtools` (a release built on tapir) | MagicForm field values, validation state, named route per node. |
-| `Wind.installDebugResolver()` (in `package:wind_kit/wind_kit.dart`) | `wind_kit` (any release that ships `Wind.installDebugResolver()`) | Wind state surfaces through the neutral `WindDebugRegistry` bridge; tapir emits the six core fields (breakpoint, brightness, platform, states, bgColor, textColor) automatically without enricher registration. |
+| `Wind.installDebugResolver()` (in `package:wind_kit/wind_kit.dart`) | `wind_kit` (any release that ships `Wind.installDebugResolver()`) | Wind state surfaces through the neutral `WindDebugRegistry` bridge; tapir reads the seven contract fields (`className`, `breakpoint`, `brightness`, `platform`, `states`, plus `bgColor` and `textColor` when they resolve) without enricher registration, but only prints them when enrichers are on: `tapir:snap --includeEnrichers` returns the ones the resolver supplies for each W-widget with a `className`, a plain `tapir:snap` none, and `tapir:observe` returns only `breakpoint` and `states` unless you pass `--includeEnrichers=full`. |
 
 ```dart
 import 'package:magic_devtools/tapir.dart'; // magic_devtools only
@@ -161,8 +161,8 @@ This writes (or updates) a `.mcp.json` file at the project root. Claude Code,
 Cursor, and Windsurf all pick up `.mcp.json` automatically from the working directory.
 The payload depends on your scaffold state:
 
-- **fastcli present** (`./bin/dowel` exists, POSIX): writes `./bin/dowel mcp:serve`, the fastest startup (~50ms warm AOT).
-- **fastcli absent**: the wrapper injects `--invocation=tapir` automatically, so the entry writes `dart run tapir mcp:serve` (~3s startup, no scaffold required).
+- **fastcli present** (`./bin/dowel` exists, POSIX): writes `./bin/dowel mcp:serve`, the fastest startup (about 0.2 s warm AOT).
+- **fastcli absent**: the wrapper injects `--invocation=tapir` automatically, so the entry writes `dart run tapir mcp:serve` (0.4 to 2.7 s startup, no scaffold required).
 
 See [Fallback invocations](../mcp/setup.md#fallback-invocations) for the full precedence table.
 

@@ -132,7 +132,7 @@ class TapirInstallCommand extends DowelCommand {
   ///
   /// Each step is idempotent on the dowel side; we still guard with a
   /// file-existence check to keep tapir:install fast on re-runs (skip the
-  /// ~3-second `dart run` startup when the artifact is already there).
+  /// `dart run` startup, 0.4 to 2.7 s, when the artifact is already there).
   ///
   /// All failures swallowed with a single user-visible warn line; the
   /// consumer can run the dowel commands manually if interested.

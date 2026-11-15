@@ -28,7 +28,7 @@
 | Fact | Value |
 |---|---|
 | Package | [`tapir`](https://pub.dev/packages/tapir) |
-| Install | `dart pub add tapir`, then `dart run tapir tapir:install` |
+| Install | `flutter pub add tapir`, then `dart run tapir tapir:install` |
 | Import | `package:tapir/tapir.dart` (`TapirPlugin.install()`, behind `if (!kReleaseMode)`) |
 | Entry points | `dart run tapir <command>`, `./bin/dowel <command>`, `TapirPlugin.install()`, `TapirPlugin.enrichers`, `TapirDowelProvider` (`package:tapir/cli.dart`), `dart run tapir mcp:serve` |
 | Platforms | Any Flutter target that exposes a VM Service in a debug or profile build: Android, iOS, web, macOS, Windows, Linux; viewport and device emulation need Chrome with a CDP port; `tapir_hot_reload_and_snap` writes to the `flutter run` stdin FIFO, so it needs a POSIX host; on a Windows host `mcp:install` writes a `dart run` entry, never `./bin/dowel` |
@@ -39,7 +39,7 @@
 ## Install
 
 ```bash
-dart pub add tapir
+flutter pub add tapir
 dart run tapir tapir:install
 dart run tapir start --device=macos   # dowel records the session every tapir:* command dials
 dart run tapir tapir:snap
@@ -77,7 +77,7 @@ dart run tapir tapir:snap --interactiveOnly
 | `e<N>` | `tapir:snap` | The same Semantics node keeps its token across snapshots, and a token outlives its widget. A ref whose element left the tree is relocated by label (`reresolved` on the response) only when the snapshot recorded a binding for it, the live tree has the same number of nodes with that label and the match sits on the route the ref was minted on; otherwise it fails as `defunct` and you re-snap |
 | `q<N>` | `tapir:find`, `tapir:observe` | Re-resolved against the live tree on every action; survives rebuilds |
 
-Narrow a read with `--within=<eN>`, `--interactiveOnly` and `--grep=<regex>`; they compose. `--includeEnrichers` adds Wind state (the host calls `Wind.installDebugResolver()` from `wind_kit`, read through `wind_kit_diagnostics_contracts`) and Magic state (`MagicTapirIntegration.install()` from `package:magic_devtools/tapir.dart`, after `Magic.init()`; it exists only in a `magic_devtools` release built on tapir, and `tapir:install` warns and skips it otherwise; see [Magic integration](https://anilcancakir.com/tapir/docs/plugins/magic-integration)). A ref line ending in `[offscreen]` or `[occluded]` names why an action would fail before you try it.
+Narrow a read with `--within=<eN>`, `--interactiveOnly` and `--grep=<regex>`; they compose. `--includeEnrichers` adds Wind state under each W-widget that has a `className`: up to seven contract fields, of which `bgColor` and `textColor` appear only when they resolve (`tapir:observe` keeps only `breakpoint` and `states` unless you pass `--includeEnrichers=full`; the host calls `Wind.installDebugResolver()` from `wind_kit`, read through `wind_kit_diagnostics_contracts`) and Magic state (`MagicTapirIntegration.install()` from `package:magic_devtools/tapir.dart`, after `Magic.init()`; it exists only in a `magic_devtools` release built on tapir, and `tapir:install` warns and skips it otherwise; see [Magic integration](https://anilcancakir.com/tapir/docs/plugins/magic-integration)). A ref line ending in `[offscreen]` or `[occluded]` names why an action would fail before you try it.
 
 ## Actions and the actionability gate
 

@@ -1724,16 +1724,18 @@ three keys the call errors; with several it uses the first of `text`, `textGone`
 
 Dispatch: `ext.tapir.wait_for_network_idle`
 
-Wait until the running app reports zero in-flight HTTP requests for a contiguous `idleMs`
-window. Playwright `waitForLoadState` network-idle semantics. Missing-crumbs graceful:
-returns idle immediately when crumbs is not set up.
+Wait until the running app reports zero in-flight HTTP requests on consecutive samples for
+`idleMs`. Playwright `waitForLoadState` network-idle semantics. The count is zero unless an
+adapter or a reader the app installs reports one (`pendingHttpCountReader`;
+`MagicHttpFacadeAdapter` from `magic_devtools` is one), and a zero count matches after one
+idle window (about `idleMs`).
 
 ### Input schema
 
 | Parameter | Type | Required | Description |
 |:---|:---|:---|:---|
-| `timeoutMs` | integer | no | Maximum total wait time. Default `5000`. |
-| `idleMs` | integer | no | Contiguous-zero window before declaring idle. Default `500`. |
+| `timeoutMs` | integer | no | Deadline, checked after each poll sample: a window that completes at or after it still matches. Default `5000`. |
+| `idleMs` | integer | no | Window of consecutive zero samples, in milliseconds, before declaring idle. Default `500`. |
 | `pollIntervalMs` | integer | no | Poll cadence in milliseconds. Minimum `100`; default `200`. |
 
 ### Returns
@@ -1741,7 +1743,12 @@ returns idle immediately when crumbs is not set up.
 Success: `{ matched: true, idleAchievedMs: <int> }`.
 
 Error on timeout: structured error envelope `{ type: "timeout", message: "max in-flight
-count observed: <int>" }`.
+count observed: <int>" }`. The loop matches after `ceil(idleMs / pollIntervalMs)`
+consecutive zero samples, each worth one `pollIntervalMs`. With the defaults the window
+completes after about 400 ms; the first sample counts, so a window of one poll interval or
+less matches on the first sample without waiting. A request that starts and finishes between
+two samples is not seen. Only a `timeoutMs` reached before that (200 or less with the
+defaults) is a timeout.
 
 ### Example call
 
