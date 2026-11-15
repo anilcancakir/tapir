@@ -53,7 +53,7 @@ post_install:
     4. Verify the CLI:
 
          ./bin/dowel list                    # fastcli wrapper (about 0.2 s warm AOT; scaffolded by tapir:install)
-         dart run tapir list     # tapir's Flutter-free wrapper: same surface, ~3s startup
+         dart run tapir list     # tapir's Flutter-free wrapper: same surface, 0.4 to 2.7 s startup
 
     5. Verify the MCP surface:
 

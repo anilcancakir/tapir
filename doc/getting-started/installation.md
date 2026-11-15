@@ -162,7 +162,7 @@ Cursor, and Windsurf all pick up `.mcp.json` automatically from the working dire
 The payload depends on your scaffold state:
 
 - **fastcli present** (`./bin/dowel` exists, POSIX): writes `./bin/dowel mcp:serve`, the fastest startup (about 0.2 s warm AOT).
-- **fastcli absent**: the wrapper injects `--invocation=tapir` automatically, so the entry writes `dart run tapir mcp:serve` (~3s startup, no scaffold required).
+- **fastcli absent**: the wrapper injects `--invocation=tapir` automatically, so the entry writes `dart run tapir mcp:serve` (0.4 to 2.7 s startup, no scaffold required).
 
 See [Fallback invocations](../mcp/setup.md#fallback-invocations) for the full precedence table.
 

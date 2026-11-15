@@ -33,6 +33,8 @@ void main() {
     test('quotes the one measured startup figure of the fast wrapper', () {
       expect(message, contains('about 0.2 s'));
       expect(message, isNot(contains('110ms')));
+      expect(message, contains('0.4 to 2.7 s startup'));
+      expect(message, isNot(contains('~3s')));
     });
   });
 }
