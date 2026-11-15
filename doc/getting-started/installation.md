@@ -59,7 +59,7 @@ Alternatively, add it manually to `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  tapir: ^1.0.0
+  tapir: ^1.0.1
 ```
 
 Then fetch dependencies:
