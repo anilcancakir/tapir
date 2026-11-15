@@ -7,7 +7,7 @@ Flutter package `tapir` (Dart 3.13+, Flutter 3.47+), a plugin of `dowel`. `Tapir
 ## Commands
 
 | Command | When |
-|---|---|
+|:---|:---|
 | `flutter test --coverage --exclude-tags=integration --timeout=30s` | CI gate; writes `coverage/lcov.info`. |
 | `dart format .` | Zero diff (CI: `--output=none --set-exit-if-changed .`). |
 | `flutter analyze --no-fatal-infos` | Zero issues. |
@@ -53,7 +53,7 @@ These change only with a coordinated bump across `tapir`, `magic` and `wind_kit`
 ## Key Gotchas
 
 | Mistake | Fix |
-|---|---|
+|:---|:---|
 | `flutter pub get` or a macOS build of `example/` changes `example/pubspec.lock` and `example/macos/Runner.xcodeproj/project.pbxproj` | Restore both before committing. |
 | A `tapir:*` command run in a git worktree (they sit under `.claude/worktrees/`, inside the main checkout) before the worktree has a session of its own | Run `dowel start` in the worktree, or pass `--state=<path>`, first. Without a session, dowel falls back to the main checkout's recorded app; `sessionOwnershipError` lets that through when the app's project root encloses the worktree, so the command drives the main checkout's app and reports success (an app started from `example/` is refused instead). |
 | A release build that registers `ext.tapir.*` | Wrap `TapirPlugin.install()` in `if (!kReleaseMode)`, not `kDebugMode`: a profile build is what `tapir:perf_run` measures. `--dart-define=TAPIR_DISABLE=1` skips registration; `TAPIR_FORCE_FRAMES=false` turns off the frame wake. |

@@ -38,7 +38,7 @@ An error is a JSON string with the human message and a machine envelope:
 Keys any success payload can carry:
 
 | Key | Meaning |
-|---|---|
+|:---|:---|
 | `framesForced: true` | A hidden or paused app was woken for this call. Normal. Not done by the perf verbs, `console`, `exceptions`, `close_app` and `evaluate`; `--dart-define=TAPIR_FORCE_FRAMES=false` turns it off. |
 | `warnings: {framesEnabled, lifecycleState, platform, hint}` | The app is not producing frames and could not be woken (a hidden browser tab, the opt-out, a `detached` app). The result cannot be trusted; follow `hint` and retry. Absent on a healthy engine. |
 | `reresolved: ["e5"]` | A stale `e<N>` was relocated by label to the control that replaced it. |
@@ -52,7 +52,7 @@ The `snapshot` parameter (`full`, `diff`, `none`) overrides `includeSnapshot` on
 ### tapir_snap
 
 | Param | Type | Default | Note |
-|---|---|---|---|
+|:---|:---|:---|:---|
 | `depth` | integer | full tree | Maximum depth from the root |
 | `within` | string | whole tree | `e<N>` of the subtree to walk; a `q<N>` is not accepted, an unknown ref is an error |
 | `interactiveOnly` | boolean | false | Only ref-bearing nodes, no `- text` lines |
@@ -64,7 +64,7 @@ Returns `{ snapshot: "<yaml>", groupId }`. A node line is `- <role> "<label>" [r
 ### tapir_observe
 
 | Param | Type | Default | Note |
-|---|---|---|---|
+|:---|:---|:---|:---|
 | `intent` | string | none | Your own note; not used by the handler |
 | `roles` | string | all | Comma list of `button`, `textbox`, `link`, `checkbox`, `heading`, `image` |
 | `limit` | integer | 50 | Candidate cap |
@@ -75,7 +75,7 @@ Returns `{ candidates: [{ ref, role, label, value, bounds, isEnabled, isVisible,
 ### tapir_screenshot
 
 | Param | Type | Default | Note |
-|---|---|---|---|
+|:---|:---|:---|:---|
 | `ref` | string | whole viewport | Capture only this widget (`e<N>` or `q<N>`) |
 | `rect` | string | ref bounds | `"x,y,w,h"` relative to the ref; without `ref` it is an error |
 | `format` | string | `jpeg` | `jpeg` or `png` |
@@ -88,7 +88,7 @@ Returns `{ format, base64, width, height }`. Prefer `ref`: a full tall page cost
 ### tapir_find
 
 | Param | Type | Note |
-|---|---|---|
+|:---|:---|:---|
 | `text` | string | Exact match on the accessibility label, then `Text.data` |
 | `contains` | string | Case-sensitive substring of the same; for dynamic labels |
 | `semanticsLabel` | string | Exact match on `SemanticsNode.label` only |
@@ -102,7 +102,7 @@ At least one of the first four; `within` alone is refused. Predicates are not al
 All run the actionability gate and accept `snapshot`, `includeSnapshot` (default true), `checkStable` and `checkReceivesEvents` (default true).
 
 | Tool | Params | Returns | Gesture |
-|---|---|---|---|
+|:---|:---|:---|:---|
 | `tapir_tap` | `ref`, `retarget` (default true), `until`, `untilTimeoutMs` (default 3000) | `{ ref, effect: {kind: "treeChanged", changed}, untilMatched?, retargeted?, tapPointOutsideOwner? }` | Down, 50ms, Up at the live centre, re-read after the gate |
 | `tapir_double_click` | `ref` | `{ ref }` | Two taps about 100ms apart, one gate |
 | `tapir_right_click` | `ref` | `{ ref, button: "right" }` | Secondary mouse button |
@@ -151,7 +151,7 @@ All run the actionability gate and accept `snapshot`, `includeSnapshot` (default
 ### tapir_scroll
 
 | Param | Type | Default | Note |
-|---|---|---|---|
+|:---|:---|:---|:---|
 | `ref` | string | first `Scrollable` | A widget inside the scrollable to drive |
 | `direction` | string | `down` | `up`, `down`, `left`, `right` |
 | `pixels` | number | 300 | Distance for `direction` |
@@ -169,7 +169,7 @@ Not gated; a delta is a `jumpTo` clamped to the extents. Returns `{ scrolled, fi
 
 ### tapir_wait_for_network_idle
 
-`timeoutMs` (5000), `idleMs` (500, the contiguous zero window), `pollIntervalMs` (200, minimum 100). Returns `{ matched: true, idleAchievedMs }`; a timeout is an error of type `timeout` whose message names `maxPending`. The in-flight count comes from `pendingHttpCountReader`, which an app wires to the separate `crumbs` package (`() => CrumbsStore.pendingHttpCount`) with an HTTP adapter that overrides `pendingCount` (the default and crumbs's `DioHttpAdapter` report 0; `MagicHttpFacadeAdapter` from `magic_devtools` counts): until both are in place the count is always 0, so the call returns `matched: true` after one idle window (about `idleMs`, no traffic seen) or a `timeout` error when `timeoutMs` is shorter than that window; assume it always reports idle.
+`timeoutMs` (5000), `idleMs` (500, a window of consecutive zero samples), `pollIntervalMs` (200, minimum 100). Returns `{ matched: true, idleAchievedMs }`; a timeout is an error of type `timeout` whose message names `maxPending`. The in-flight count comes from `pendingHttpCountReader`, a function an app can replace with its own request counter or point at the separate `crumbs` package (`() => CrumbsStore.pendingHttpCount`, which sums the registered adapters' `pendingCount`; crumbs ships no adapter, `pendingCount` has no default body, `MagicHttpFacadeAdapter` from `magic_devtools` is one, and an interceptor that only calls `CrumbsStore.recordHttp` counts nothing). The count is zero unless an adapter or a reader the app installs reports one, so without that the call returns `matched: true` after `ceil(idleMs / pollIntervalMs)` consecutive zero samples (about `idleMs`, no traffic seen). The first sample already counts, so an `idleMs` no larger than `pollIntervalMs` matches on the first one, and a request that starts and finishes between two samples is not seen: a match means consecutive zero samples, not a confirmed contiguous idle window. `timeoutMs` is checked only after a poll sample that did not complete the window, so a window that completes at or after `timeoutMs` still returns `matched: true` (with the defaults, `timeoutMs: 300` matches at about 400 ms); a `timeout` error needs `timeoutMs` to run out before the window completes (with the defaults, `timeoutMs` of 200 or less). When nothing installs a reader or adapter, assume it always reports idle.
 
 ## Navigation and overlays
 

@@ -60,7 +60,7 @@ The hit test can also fail to answer. On Flutter Web's debug build that is routi
 ```
 
 | `checks` | Meaning |
-|---|---|
+|:---|:---|
 | absent | Confirmed: the hit test reached the target |
 | `receivesEvents: "indeterminate"` | Could not answer; the action ran anyway |
 | `receivesEvents: "skipped"` | You passed `checkReceivesEvents: false` |
@@ -116,7 +116,7 @@ Call `tapir_find` or `tapir_observe` again with broader or different predicates;
 ## Snap or observe
 
 | Use `tapir_snap` when | Use `tapir_observe` when |
-|---|---|
+|:---|:---|
 | You reason about structure (parents, headings, prose) | You loop over candidates (form fields, rows, links) |
 | The next action is one-shot | The action may retry or the UI animates |
 | You need the text around the controls | Only interactive widgets matter |
@@ -146,7 +146,7 @@ Both switches are per call; there is no session-wide way to skip the gate, so a 
 The handle still resolves, to that one match. Predicates are not intersected: the resolver uses the first one set in the order `key`, `semanticsLabel`, `text`, `contains` and ignores the rest, except that a `text` beside a `key` must also appear in a `Text` below that widget. So narrowing means swapping the predicate, not adding a second one to `semanticsLabel`:
 
 | Use | When |
-|---|---|
+|:---|:---|
 | `key` | The widget carries a `Key`; the most precise, survives label changes, and wins over every other predicate |
 | `text` | The visible text differs from the label (instead of `semanticsLabel`) |
 | `contains` | Only part of the label is unique (`"Confirm"` for "Confirm password"); instead of `text` and `semanticsLabel` |

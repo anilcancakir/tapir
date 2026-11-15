@@ -174,7 +174,7 @@ The VM Service handler propagates errors as `ServiceExtensionResponse.error(exte
 When `--includeEnrichers` is true, every `TapirSnapshotEnricher` appended to the `TapirPlugin.enrichers` live list contributes indented lines under each ref. The two first-party enrichers:
 
 - **MagicTapirIntegration** ships the Magic enrichers (see [Plugins: Magic integration](../plugins/magic-integration.md) for the fields).
-- **`wind_kit`** surfaces a six-field `wind:` block (breakpoint, brightness, platform, states, bgColor, textColor) through the neutral `wind_kit_diagnostics_contracts.WindDebugRegistry` bridge rather than via an enricher, once the app calls `Wind.installDebugResolver()`, so the data appears under each W-prefixed widget ref without any enricher registration.
+- **`wind_kit`** surfaces a `wind:` block of seven contract fields (`className`, `breakpoint`, `brightness`, `platform`, `states`, plus `bgColor` and `textColor` when they resolve) through the neutral `wind_kit_diagnostics_contracts.WindDebugRegistry` bridge rather than via an enricher, once the app calls `Wind.installDebugResolver()`, so the data appears under the ref of each W-prefixed widget that has a non-empty `className`, without any enricher registration. The resolver returns nothing for `WAnchor`, `WBreakpoint`, `WindAnimationWrapper` and `WKeyboardActions`, which have no `className`, so they print no block.
 
 Each enricher is synchronous and stateless; the `Element` reference is never retained across calls.
 

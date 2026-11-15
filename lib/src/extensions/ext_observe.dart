@@ -49,7 +49,7 @@ const Set<String> _kDefaultEnricherKeys = <String>{
 
 /// Default-subset wind sub-fields (the `includeEnrichers='true'` projection).
 /// The full Wind diagnostics block (sourced via `wind_kit_diagnostics_contracts`)
-/// exposes the 6 core fields including hex colours and per-state breakdowns;
+/// exposes up to 7 contract fields (the two hex colours only when they resolve);
 /// the default subset keeps only the two that drive agent decisions
 /// (breakpoint + active state).
 const Set<String> _kDefaultWindKeys = <String>{'breakpoint', 'states'};

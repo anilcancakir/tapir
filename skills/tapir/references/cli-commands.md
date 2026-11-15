@@ -15,7 +15,7 @@ Every `tapir:*` command `TapirDowelProvider.commands()` registers, run from a sh
 ## Entry points
 
 | Form | When |
-|---|---|
+|:---|:---|
 | `./bin/dowel <cmd>` | The default once `tapir:install` built it: an AOT binary that rebuilds itself when stale |
 | `dart run tapir <cmd>` | Before `./bin/dowel` exists; loads the tapir commands itself, slower to start |
 
@@ -35,7 +35,7 @@ Default output depends on the verb:
 Exit `0` is success and `1` is failure, including the verdicts a summary would hide:
 
 | Command | Exits 1 when |
-|---|---|
+|:---|:---|
 | `tapir:wait_for`, `tapir:wait_for_network_idle` | The condition never resolved |
 | `tapir:fill`, `tapir:type` | `effect.verified` is false (the summary names what the field holds); `--json` and `--includeSnapshot` print the response and exit 0 |
 | `tapir:set_checkbox` | `effect.verified` is false (the summary names the value read back); `--json` and `--includeSnapshot` print the response and exit 0 |
@@ -52,7 +52,7 @@ On web with a `cdpPort` in the session, `snap`, `observe`, `tap`, `fill`, `type`
 ## Shared flags
 
 | Flag | Default | On |
-|---|---|---|
+|:---|:---|:---|
 | `--ref=<eN or qN>` | required | The ref-taking verbs |
 | `--[no-]checkStable`, `--[no-]checkReceivesEvents` | on | `tap`, `double_click`, `right_click`, `triple_click`, `hover`, `drag`, `type`, `fill`, `set_checkbox` |
 | `--includeSnapshot` | off (the MCP tools default it on) | The action verbs; prints the envelope with the post-action snapshot |
@@ -130,7 +130,7 @@ Flag names match the MCP parameter names (`--timeoutMs`, not `--timeout`), excep
 ./bin/dowel tapir:wait_for_network_idle --idleMs=800 --timeoutMs=8000 --pollIntervalMs=200
 ```
 
-`wait_for_network_idle` reads the in-flight count through `pendingHttpCountReader`, which an app wires to the separate `crumbs` package (`() => CrumbsStore.pendingHttpCount`) with an HTTP adapter that overrides `pendingCount`; until both are in place the count is always 0, so it succeeds after one idle window (about `idleMs`) or times out when `timeoutMs` is shorter than that; either way assume it always reports idle.
+`wait_for_network_idle` reads the in-flight count through `pendingHttpCountReader`, which an app can replace with its own counter or point at the separate `crumbs` package (`() => CrumbsStore.pendingHttpCount`). The count is zero unless an adapter or a reader the app installs reports one (`MagicHttpFacadeAdapter` from `magic_devtools` is one; an interceptor that only calls `CrumbsStore.recordHttp` counts nothing), so without that it succeeds after `ceil(idleMs / pollIntervalMs)` consecutive zero samples (about `idleMs`; the first sample counts, and a request that starts and finishes between two samples is not seen). `timeoutMs` is checked only after a poll sample, so a window that completes at or after `timeoutMs` still succeeds, and a timeout needs `timeoutMs` to run out before the window completes (200 ms or less with the defaults); with no reader or adapter installed, assume it always reports idle.
 
 ### Navigation and overlays
 
