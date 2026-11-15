@@ -1156,8 +1156,8 @@ class TapirDowelProvider extends DowelServiceProvider {
           '`MagicHttpFacadeAdapter` from `magic_devtools` is one), and a '
           'zero count matches after one idle window (about `idleMs`). '
           'Callers do not need to branch on the host\'s install state.\n'
-          '- `pollIntervalMs` must be >= 100ms (CPU constraint); the '
-          'handler asserts this internally.\n'
+          '- `pollIntervalMs` must be >= 100ms (CPU constraint); a smaller '
+          'value is refused with an `invalid_param` error.\n'
           '\n'
           'Example: `{ "timeoutMs": 8000, "idleMs": 750 }`',
       inputSchema: <String, dynamic>{

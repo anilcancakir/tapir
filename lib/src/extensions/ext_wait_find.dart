@@ -406,8 +406,8 @@ const int _kMinPollIntervalMs = 100;
 /// Blocks (Dart-side) until [pendingHttpCountReader] has reported 0 on
 /// `ceil(idleMs / pollIntervalMs)` consecutive samples, each worth one
 /// [pollIntervalMs], or until [timeoutMs] is reached at a sample that did not
-/// complete that window. Polls every [pollIntervalMs] (minimum 100 ms
-/// enforced by [networkIdleWaitLoop]). With the defaults the window completes
+/// complete that window. Polls every [pollIntervalMs] (minimum 100 ms,
+/// refused by this handler as `invalid_param`). With the defaults the window completes
 /// after about 400 ms; the first sample counts, so a window of one poll
 /// interval or less matches on the first sample without waiting, and a window
 /// that completes at or after [timeoutMs] still matches. A request that
