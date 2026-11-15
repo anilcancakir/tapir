@@ -37,7 +37,7 @@ dart run tapir tapir:doctor
 `tapir:doctor` returns an integer exit code via `Future<int>`:
 
 | Exit code | Meaning |
-|-----------|---------|
+|:-----------|:---------|
 | `0` | The ERROR-class row passed or was skipped. WARN and INFO rows do not fail the doctor, and neither does a missing session or an app that did not answer. |
 | `1` | The Semantics-tree row (check 4) failed, in one of two ways: the app answered but registers no `ext.tapir.*` extension (it never calls `TapirPlugin.install()`, or it was built with `--dart-define=TAPIR_DISABLE=1`), or it answered that its Semantics tree is off. This is the only ERROR-class check. |
 
@@ -96,7 +96,7 @@ A worktree checked out inside the recorded root (for example `<repo>/.claude/wor
 Probes the `cdpPort` recorded in state for three failures. They matter together because they present as one symptom, a capture that never changes, and nothing else in the output distinguishes them:
 
 | Finding | What it means |
-|---|---|
+|:---|:---|
 | Port unreachable | A killed `flutter run` can leave its dart dev server holding the web port while its Chrome (and the debug port) is gone. The recorded port now points at nothing. |
 | No page on this run's `webPort` | An orphan browser from an earlier run, still up with the old build and its own debug port. Captures come back byte-identical from it. |
 | The matching page is hidden | `document.hidden` is true, so Flutter has stopped producing frames: snapshots lose their `- text` nodes and gestures cannot take effect. Send CDP `Page.bringToFront`. |

@@ -26,7 +26,7 @@ dart run tapir tapir:perf_campaign <campaign.yaml> --platform=chrome|android|ios
 Rebuild a stale dispatcher before invoking it: the command runs inside the compiled dispatcher, whose staleness stamp keys only on `pubspec.lock` and the SDK, so a tapir change reached through a path override never reaches it. Run `rm -f .dowel/build.stamp` first.
 
 | Flag | Default | Meaning |
-|------|---------|---------|
+|:------|:---------|:---------|
 | `<campaign.yaml>` / `--campaign` | required | The campaign file. |
 | `--platform` | required | `chrome`, `android` or `ios`. Only scenarios whose `platforms` list it run. |
 | `--label` | `run` | Names the run in every file name. `[a-z0-9_-]` only. |
@@ -149,7 +149,7 @@ A value read through `${env.*}` or a `secret: true` param, in `after_start` or a
 ## Exit codes
 
 | Exit code | Meaning |
-|-----------|---------|
+|:-----------|:---------|
 | `0` | Every selected scenario passed. |
 | `1` | A bad input or campaign file, nothing selected, a hook, `flutter pub get` or Android step that failed or could not start, an `applicationId` that could not be used, any scenario that failed every attempt, a dowel stop after the campaign that exited non-zero, or a `hooks.after_campaign` that failed or could not start. |
 

@@ -40,7 +40,7 @@ dart run tapir tapir:snap [--depth=<n>]
 ## Arguments
 
 | Option | Type | Default | Description |
-|--------|------|---------|-------------|
+|:--------|:------|:---------|:-------------|
 | `--depth` | int (string-parsed) | unset (full tree) | Optional max tree depth. Caps the walk so very deep widget trees stay readable. Omit for the full tree. |
 | `--includeEnrichers` | flag | `false` | Emit Magic and Wind enricher fragments under each ref entry. Default off matches the Playwright-style minimal snapshot; turn on when the agent needs the className tokens, route name, or form field metadata. |
 | `--within` | string (`e<N>`) | unset (whole tree) | Scope the walk to one subtree. Takes an `e<N>` ref from a prior snapshot; `q<N>` query handles are not addressable here, since they re-resolve per action and have no fixed subtree. An unknown or node-less ref is an error rather than a silent widening. |
@@ -129,7 +129,7 @@ When the `FlutterError.onError` capture buffer holds non-fatal render or build e
 Fields:
 
 | Field | Type | Description |
-|-------|------|-------------|
+|:-------|:------|:-------------|
 | `count` | int | Total number of captured render/build errors. May exceed `recent.length`. |
 | `recent` | array (max 3) | Most recent entries; each has `type` (string) and `message` (first line only). |
 | `hint` | string | Fixed advisory pointing to `tapir:exceptions` (CLI) / `tapir_exceptions` (MCP) for full detail. |

@@ -21,7 +21,7 @@ dart run tapir tapir:perf_begin [--mode=attribution|timing] [--phases] [--json]
 `tapir:perf_begin` requires a running Flutter session (`CommandBoot.connected`) and calls `ext.tapir.perf_begin`.
 
 | Flag | Default | Meaning |
-|------|---------|---------|
+|:------|:---------|:---------|
 | `--mode` | `attribution` | `attribution` profiles builds for blocks, self time and counters. `timing` touches no profiling flag and reports frame timings only. |
 | `--phases` | `false` | Also profile layout and paint, not just builds. The span volume multiplies, so reach for it when builds alone did not explain the cost. Rejected with `--mode=timing`. |
 | `--json` | `false` | Print the raw envelope instead of the one-line summary. |
@@ -54,7 +54,7 @@ Each flag's prior value is saved in the session. `tapir:perf_end` restores those
 ## Returns
 
 | Exit code | Meaning |
-|-----------|---------|
+|:-----------|:---------|
 | `0` | Session open. |
 | non-zero | VM Service handler returned an error (no running app at the recorded URI). |
 
