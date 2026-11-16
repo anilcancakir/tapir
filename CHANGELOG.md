@@ -8,6 +8,10 @@ This project follows [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+
+- **`tapir:install` leaves an app wired through `MagicDevtools.installPre()` and `installPost()` alone.** The installer looked only for `TapirPlugin.install()` and `MagicTapirIntegration.install()`, which the `magic_devtools` wrapper calls itself, so it added a second `TapirPlugin` block, a `MagicTapirIntegration` block and an unused `package:tapir/tapir.dart` import to an app that was already wired (harmless at runtime, noise in the diff). `installPre()` now stands for the tapir block and its import, `installPost()` for the Magic block; an app that calls only `installPre()` still gets the Magic block. (`lib/src/commands/tapir_install_command.dart`, `doc/commands/tapir-install.md`)
+
 ## [1.0.1] - 2026-11-15
 
 ### Changed

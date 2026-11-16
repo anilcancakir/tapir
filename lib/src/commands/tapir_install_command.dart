@@ -209,6 +209,10 @@ class TapirInstallCommand extends DowelCommand {
   ///      inject `MagicTapirIntegration.install()` AFTER that call (the
   ///      integration queries `Magic.find<X>()` for the form / nav
   ///      enrichers, so it must run after the container is ready).
+  ///
+  /// An app that calls magic_devtools' `MagicDevtools.installPre()` /
+  /// `installPost()` wrapper already has the matching install calls, so the
+  /// block each one covers is skipped.
   static void _injectRuntimeWiring(DowelContext ctx, String mainDartPath) {
     ctx.output.info('Wiring TapirPlugin into $mainDartPath...');
 
@@ -221,11 +225,22 @@ class TapirInstallCommand extends DowelCommand {
     // snippet, so a re-run neither adds a second block nor an import nothing
     // uses.
     final String original = FileHelper.readFile(mainDartPath);
-    final bool wiresTapir = !original.contains('TapirPlugin.install()');
+
+    // magic_devtools' one-call wrapper installs both halves itself:
+    // `installPre()` calls `TapirPlugin.install()` and `installPost()` calls
+    // `MagicTapirIntegration.install()`, so an app wired through it needs no
+    // second block, and no import the wrapper's own barrel already carries.
+    final bool tapirViaWrapper = original.contains('MagicDevtools.installPre(');
+    final bool magicViaWrapper = original.contains(
+      'MagicDevtools.installPost(',
+    );
+    final bool wiresTapir =
+        !original.contains('TapirPlugin.install()') && !tapirViaWrapper;
     final bool wantsMagic =
         original.contains('await Magic.init(') &&
         _hasMagicDevtoolsDep() &&
-        !original.contains('MagicTapirIntegration.install()');
+        !original.contains('MagicTapirIntegration.install()') &&
+        !magicViaWrapper;
     // A magic_devtools release that predates tapir has no `tapir.dart`; its
     // import would leave a lib/main.dart that does not compile.
     final MagicDevtoolsTapirSupport magicSupport = wantsMagic
@@ -241,10 +256,12 @@ class TapirInstallCommand extends DowelCommand {
         "import 'package:flutter/foundation.dart' show kReleaseMode;",
       );
     }
-    MainDartEditor.addImport(
-      mainDartPath,
-      "import 'package:tapir/tapir.dart';",
-    );
+    if (!tapirViaWrapper) {
+      MainDartEditor.addImport(
+        mainDartPath,
+        "import 'package:tapir/tapir.dart';",
+      );
+    }
 
     // 2. Read once, choose the correct anchor, transform via two
     //    pure-functional injects (idempotent: each helper checks
