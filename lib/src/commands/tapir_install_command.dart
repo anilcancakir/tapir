@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dowel/dowel.dart';
+import 'package:yaml/yaml.dart';
 
 /// `dowel tapir:install`: one-line bootstrap for the tapir plugin.
 ///
@@ -514,11 +515,20 @@ class TapirInstallCommand extends DowelCommand {
 
   /// Returns true when the consumer's pubspec.yaml lists `magic_devtools:`
   /// (the package that ships MagicTapirIntegration) under `dependencies:` or
-  /// `dev_dependencies:` (2-space indent).
+  /// `dev_dependencies:`, whatever the indentation (a parsed read, not a
+  /// pattern match).
   static bool _hasMagicDevtoolsDep() {
     final pubspec = File(pubspecPathResolver());
     if (!pubspec.existsSync()) return false;
-    return RegExp(r'\n  magic_devtools:').hasMatch(pubspec.readAsStringSync());
+
+    final Object? document = loadYaml(pubspec.readAsStringSync());
+    if (document is! YamlMap) return false;
+
+    return <String>['dependencies', 'dev_dependencies'].any((String section) {
+      final Object? entries = document[section];
+
+      return entries is YamlMap && entries.containsKey('magic_devtools');
+    });
   }
 }
 

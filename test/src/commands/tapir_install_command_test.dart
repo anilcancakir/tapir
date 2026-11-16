@@ -796,6 +796,49 @@ Future<void> main() async {
       },
     );
 
+    test('a wrapped app is recognised whatever the pubspec indentation: a '
+        'four-space magic_devtools entry still counts', () async {
+      const wrapped = '''
+import 'package:flutter/foundation.dart' show kReleaseMode;
+import 'package:material_ui/material_ui.dart';
+import 'package:magic/magic.dart';
+import 'package:magic_devtools/magic_devtools.dart';
+
+Future<void> main() async {
+  if (!kReleaseMode) MagicDevtools.installPre();
+  await Magic.init(configFactories: [() => {}]);
+  if (!kReleaseMode) MagicDevtools.installPost();
+  runApp(const MagicApplication());
+}
+''';
+      final mainDartPath = _seedProject(
+        tempDir,
+        magicDevtoolsLibrary: 'tapir.dart',
+        mainDartContents: wrapped,
+      );
+      File('${tempDir.path}/pubspec.yaml').writeAsStringSync(
+        [
+          'name: stub_app',
+          'environment:',
+          '  sdk: ">=3.4.0 <4.0.0"',
+          'dependencies:',
+          '    flutter:',
+          '        sdk: flutter',
+          '    magic: any',
+          '    magic_devtools: any',
+          '',
+        ].join('\n'),
+      );
+      TapirInstallCommand.mainDartPathResolver = () => mainDartPath;
+      TapirInstallCommand.pubspecPathResolver = () =>
+          '${tempDir.path}/pubspec.yaml';
+
+      final exit = await TapirInstallCommand().handle(_ctx());
+
+      expect(exit, equals(0));
+      expect(File(mainDartPath).readAsStringSync(), equals(wrapped));
+    });
+
     test('a wrapped app whose zone wrapper owns the binding gets no '
         'WidgetsFlutterBinding line', () async {
       const wrapped = '''
