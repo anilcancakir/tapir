@@ -1141,6 +1141,62 @@ Future<void> main() async {
       expect(output.content, contains('CDP session: port 9333'));
       expect(output.content, isNot(contains('bringToFront')));
     });
+
+    test(
+      'says tapir_evaluate is unavailable once a cdpPort is recorded',
+      () async {
+        // --cdp-port makes dowel start flutter on the web-server device, which
+        // has no VM Service evaluate: the session is healthy for every
+        // ext.tapir.* verb and still cannot evaluate.
+        TapirDoctorCommand.stateFileReader = () async => <String, dynamic>{
+          'cdpPort': 9333,
+          'webPort': 3100,
+        };
+        TapirDoctorCommand.cdpSessionProbe = (int port, int? webPort) async =>
+            const TapirCdpSessionReport(
+              reachable: true,
+              pageUrls: <String>['http://localhost:3100/'],
+              hidden: false,
+            );
+
+        final output = BufferedOutput();
+        await TapirDoctorCommand().handle(
+          DowelContext.bare(MapInput(const {}), output),
+        );
+
+        expect(output.content, contains('Evaluate: unavailable'));
+        expect(output.content, contains('tapir_evaluate'));
+        expect(output.content, contains('dowel start --device=chrome'));
+      },
+    );
+
+    test('keeps the evaluate note when the CDP port is unreachable', () async {
+      TapirDoctorCommand.stateFileReader = () async => <String, dynamic>{
+        'cdpPort': 9333,
+        'webPort': 3100,
+      };
+      TapirDoctorCommand.cdpSessionProbe = (int port, int? webPort) async =>
+          const TapirCdpSessionReport(reachable: false);
+
+      final output = BufferedOutput();
+      await TapirDoctorCommand().handle(
+        DowelContext.bare(MapInput(const {}), output),
+      );
+
+      expect(output.content, contains('unreachable'));
+      expect(output.content, contains('Evaluate: unavailable'));
+    });
+
+    test('stays silent about evaluate without a cdpPort', () async {
+      TapirDoctorCommand.stateFileReader = () async => <String, dynamic>{};
+
+      final output = BufferedOutput();
+      await TapirDoctorCommand().handle(
+        DowelContext.bare(MapInput(const {}), output),
+      );
+
+      expect(output.content, isNot(contains('Evaluate:')));
+    });
   });
 
   group('TapirDoctorCommand.defaultCdpSessionProbe', () {

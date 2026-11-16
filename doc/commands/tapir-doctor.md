@@ -101,7 +101,7 @@ Probes the `cdpPort` recorded in state for three failures. They matter together 
 | No page on this run's `webPort` | An orphan browser from an earlier run, still up with the old build and its own debug port. Captures come back byte-identical from it. |
 | The matching page is hidden | `document.hidden` is true, so Flutter has stopped producing frames: snapshots lose their `- text` nodes and gestures cannot take effect. Send CDP `Page.bringToFront`. |
 
-WARN in all three cases. Skipped when no `cdpPort` is recorded, which is the normal state for a native target. The visibility read targets the page whose URL carries this run's `webPort`, not whichever tab Chrome happens to list first.
+WARN in all three cases. Skipped when no `cdpPort` is recorded, which is the normal state for a native target. Whenever a `cdpPort` is recorded, doctor also prints an `Evaluate: unavailable` info line first: `--cdp-port` runs flutter on the `web-server` device, which has no VM Service `evaluate`, so `tapir_evaluate` and `dowel tinker` fail on that session whatever the probe finds. Restart with `dowel stop` and `dowel start --device=chrome` without `--cdp-port` to evaluate. The visibility read targets the page whose URL carries this run's `webPort`, not whichever tab Chrome happens to list first.
 
 See [Frame production](../reference/frame-production.md) for the hidden-page case in full.
 
