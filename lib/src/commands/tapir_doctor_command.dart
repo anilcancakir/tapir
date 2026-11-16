@@ -610,10 +610,13 @@ class TapirDoctorCommand extends DowelCommand {
 
     final bool hasMagicInit = source.contains('Magic.init(');
     // magic_devtools' one-call wrapper installs MagicTapirIntegration inside
-    // MagicDevtools.installPost, so either call wires the integration.
+    // MagicDevtools.installPost, so either call wires the integration. Only a
+    // release that ships `lib/tapir.dart` does: an older one has the same
+    // wrapper names and installs the Dusk integrations.
     final bool hasMagicIntegration =
         source.contains('MagicTapirIntegration.install') ||
-        source.contains('MagicDevtools.installPost');
+        (source.contains('MagicDevtools.installPost') &&
+            magicDevtoolsTapirProbe() == MagicDevtoolsTapirSupport.available);
 
     if (hasMagicInit && hasMagicIntegration) {
       ctx.output.info('$label: Magic-stack detected, integration wired');

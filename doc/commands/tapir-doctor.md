@@ -73,7 +73,7 @@ Reports the Semantics state the running app answered with. The only check that c
 
 Reads `lib/main.dart` and reports one of these states:
 
-- `Magic-stack detected, integration wired`: `Magic.init(` is present, and so is `MagicTapirIntegration.install` or the `MagicDevtools.installPost` wrapper that calls it.
+- `Magic-stack detected, integration wired`: `Magic.init(` is present, and so is `MagicTapirIntegration.install` or the `MagicDevtools.installPost` wrapper that calls it (the wrapper counts only when the resolved `magic_devtools` ships `lib/tapir.dart`; an older release's wrapper installs the Dusk integrations).
 - `Magic detected but MagicTapirIntegration missing; wire it with tapir:install`: `Magic.init(` is present, the integration is not, and the resolved `magic_devtools` ships `lib/tapir.dart`.
 - `Magic detected, but the installed magic_devtools has no tapir integration yet; upgrade it to a release built on tapir, then rerun tapir:install`: the resolved `magic_devtools` has no `lib/tapir.dart`, so there is no class to wire yet.
 - `Magic detected, but no magic_devtools resolved; add a release built on tapir to dev_dependencies, run flutter pub get, then rerun tapir:install`: `.dart_tool/package_config.json` names no `magic_devtools`.
