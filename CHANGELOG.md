@@ -8,6 +8,12 @@ This project follows [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-11-16
+
+### Changed
+
+- **A stable tag publishes `server.json` to the MCP registry.** `publish.yml` has an `mcp-registry` job after the GitHub Release that signs in through GitHub OIDC and publishes `io.github.anilcancakir/tapir`, so the registry listing follows each release instead of a manual publish. (`.github/workflows/publish.yml`)
+
 ### Fixed
 
 - **`tapir_dismiss_modals`, `tapir_reset_overlays` and `tapir_navigate` no longer freeze the app over a modal that guards its exit.** go_router refuses the pop of a `GoRoute` with `onExit` and decides in a microtask, so the synchronous `popUntil` re-popped the same route forever and the page stopped answering until a reload. Modals are now popped one at a time; a guarded one is popped once and given three frames to leave. One that leaves is counted and dismissal carries on; one whose guard refuses stays open, is not counted and ends dismissal on its Navigator. A call that arrives while another dismissal is waiting on a guarded modal joins it and gets the same count, so the modal is popped once. `tapir_navigate` then reaches its adapter as before, and its URL check still decides `navigated`. (`lib/src/extensions/ext_modal_router.dart`, `lib/src/tapir_dowel_provider.dart`, `skills/tapir/`, `doc/`)
@@ -610,7 +616,8 @@ Initial public release of `fluttersdk_dusk`. E2E driver for Flutter apps. Snapsh
 
 `DuskSnapshotEnricher` typedef, `DuskPlugin.install` / `DuskPlugin.enrichers` / `DuskPlugin.registerNavigateAdapter`, `RefRegistry` public methods (`register`, `lookup`, `registerQuery`, `lookupQuery`, `disposeAll`, `resetForTesting`), and every MCP tool name / `ext.dusk.*` extension name are part of the public 0.0.1 contract. Future releases keep these stable across the 0.x line; any change requires a coordinated bump with `magic` + `wind`.
 
-[Unreleased]: https://github.com/anilcancakir/tapir/compare/1.0.1...HEAD
+[Unreleased]: https://github.com/anilcancakir/tapir/compare/1.0.2...HEAD
+[1.0.2]: https://github.com/anilcancakir/tapir/compare/1.0.1...1.0.2
 [1.0.1]: https://github.com/anilcancakir/tapir/compare/1.0.0...1.0.1
 [1.0.0]: https://github.com/anilcancakir/tapir/compare/0.0.24...1.0.0
 [0.0.24]: https://github.com/anilcancakir/tapir/compare/0.0.23...0.0.24
