@@ -72,7 +72,10 @@ void registerCheckboxExtensions() {
 ///   snapshot; run `ext.tapir.snap` afterwards to see the post-toggle tree.
 ///
 /// Response JSON (default); `value` is the state read back after the tap,
-/// not the request, so it equals `effect.after`:
+/// not the request, so it equals `effect.after`. The read-back is repeated
+/// for up to 1.5 s while it differs from the request, so a control that
+/// flips only once the app hears back reads as verified; the control is
+/// tapped once whatever the read-back finds:
 /// ```json
 /// {
 ///   "ref": "e3",
@@ -222,8 +225,19 @@ Future<developer.ServiceExtensionResponse> tapirSetCheckboxHandler(
   // 8. Re-read the widget rather than reporting the value we asked for. A
   //    control whose parent rejects the change, or one whose tap landed on
   //    an overlay, keeps its old state, and `value: targetValue` would call
-  //    that a success.
-  final bool? settledValue = _readCheckedState(entry).value;
+  //    that a success. An app that flips the control only once a request
+  //    answers (a switch bound to a PATCH) shows the change later, so the
+  //    read is repeated, without a second tap, until it matches or the
+  //    settle window runs out.
+  bool? settledValue = _readCheckedState(entry).value;
+  for (
+    int poll = 0;
+    settledValue != targetValue && poll < _kSettlePolls;
+    poll++
+  ) {
+    await Future<void>.delayed(_kSettlePoll);
+    settledValue = _readCheckedState(entry).value;
+  }
 
   final Map<String, dynamic> payload = <String, dynamic>{
     'ref': ref,
@@ -260,6 +274,15 @@ developer.ServiceExtensionResponse _untoggled(
     'effect': checkedEffect(expected: target, before: before, after: target),
   });
 }
+
+/// Cadence of the post-tap read-back while the control has not reached the
+/// requested state.
+const Duration _kSettlePoll = Duration(milliseconds: 50);
+
+/// Read-backs after the first one: 30 polls bound the settle window to
+/// 1.5 s, room for a local round trip, before the answer is `verified: false`.
+/// Counted rather than timed so a test's fake clock bounds it the same way.
+const int _kSettlePolls = 30;
 
 /// The values that switch a gate check off, as the other gated verbs read
 /// them.
