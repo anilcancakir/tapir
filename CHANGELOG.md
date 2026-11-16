@@ -8,6 +8,12 @@ This project follows [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-11-16
+
+### Changed
+
+- **A stable tag publishes `server.json` to the MCP registry.** `publish.yml` has an `mcp-registry` job after the GitHub Release that signs in through GitHub OIDC and publishes `io.github.anilcancakir/tapir`, so the registry listing follows each release instead of a manual publish. (`.github/workflows/publish.yml`)
+
 ### Fixed
 
 - **tapir says where `--cdp-port` gives up `tapir_evaluate`.** `--cdp-port` makes dowel run flutter on the `web-server` device, which has no VM Service `evaluate`, yet the quickstart, the skill and the README recommended the flag with no caveat, so an agent that followed them called `tapir_evaluate` and got an SDK error. The `tapir_evaluate` descriptor, skill rule 16 and its MCP reference, the MCP tool reference, the quickstart, the README and `llms.txt` now say it, and `tapir:doctor` prints an `Evaluate: unavailable` info line for any session that records a `cdpPort`. The error text itself is dowel's (1.0.4). Fixes #91. (`lib/src/tapir_dowel_provider.dart`, `lib/src/commands/tapir_doctor_command.dart`, `skills/tapir/`, `doc/`)
@@ -612,7 +618,8 @@ Initial public release of `fluttersdk_dusk`. E2E driver for Flutter apps. Snapsh
 
 `DuskSnapshotEnricher` typedef, `DuskPlugin.install` / `DuskPlugin.enrichers` / `DuskPlugin.registerNavigateAdapter`, `RefRegistry` public methods (`register`, `lookup`, `registerQuery`, `lookupQuery`, `disposeAll`, `resetForTesting`), and every MCP tool name / `ext.dusk.*` extension name are part of the public 0.0.1 contract. Future releases keep these stable across the 0.x line; any change requires a coordinated bump with `magic` + `wind`.
 
-[Unreleased]: https://github.com/anilcancakir/tapir/compare/1.0.1...HEAD
+[Unreleased]: https://github.com/anilcancakir/tapir/compare/1.0.2...HEAD
+[1.0.2]: https://github.com/anilcancakir/tapir/compare/1.0.1...1.0.2
 [1.0.1]: https://github.com/anilcancakir/tapir/compare/1.0.0...1.0.1
 [1.0.0]: https://github.com/anilcancakir/tapir/compare/0.0.24...1.0.0
 [0.0.24]: https://github.com/anilcancakir/tapir/compare/0.0.23...0.0.24
