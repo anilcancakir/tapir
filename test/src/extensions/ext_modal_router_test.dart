@@ -177,6 +177,30 @@ void main() {
       expect(find.text('home'), findsOneWidget);
     });
 
+    testWidgets(
+      'overlapping dismissals share one traversal: a guarded modal is '
+      'popped once and both callers get its count',
+      (tester) async {
+        final NavigatorState navigator = await mountHome(tester);
+        final _FakeModalRoute sheet = _FakeModalRoute(
+          label: 'guarded-sheet',
+          guard: _ExitGuard.allow,
+        );
+        await open(tester, navigator, sheet);
+
+        final List<int> counts = <int>[];
+        unawaited(dismissAllModals().then(counts.add));
+        unawaited(dismissAllModals().then(counts.add));
+        for (int frame = 0; frame < 40 && counts.length < 2; frame++) {
+          await tester.pump(const Duration(milliseconds: 50));
+        }
+
+        expect(counts, equals(<int>[1, 1]));
+        expect(sheet.popRequests, equals(1), reason: 'one pop, whoever asked');
+        expect(sheet.isActive, isFalse);
+      },
+    );
+
     testWidgets('an exit the guard refuses leaves the modal open, uncounted', (
       tester,
     ) async {

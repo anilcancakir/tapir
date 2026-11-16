@@ -109,10 +109,23 @@ const int _kGuardedExitFrames = 3;
 /// or its exit never landed) stays open, is not counted, and ends dismissal on
 /// that navigator. The call never pops a route twice and always returns.
 ///
+/// A call that arrives while another traversal is waiting on a guarded modal
+/// joins it and answers the same count: two traversals would read the same top
+/// route and pop it twice, which asks a "discard changes?" guard twice and
+/// counts the route once per caller.
+///
 /// Returns the total number of routes popped (0 when no modals are open or
 /// when the widget tree is not yet initialised). The page navigation stack is
 /// never touched: only [PopupRoute] subclasses are popped.
-Future<int> dismissAllModals() async {
+Future<int> dismissAllModals() =>
+    _dismissInFlight ??= _dismissEveryNavigator().whenComplete(() {
+      _dismissInFlight = null;
+    });
+
+/// The traversal [dismissAllModals] callers share while it is running.
+Future<int>? _dismissInFlight;
+
+Future<int> _dismissEveryNavigator() async {
   // 1. Locate the root element. If the binding is not initialised yet (e.g.
   //    very early in startup) return 0 — nothing to dismiss.
   final Element? root = WidgetsBinding.instance.rootElement;
