@@ -1247,6 +1247,127 @@ void main() {
       },
     );
 
+    // -------------------------------------------------------------------------
+    // (x) A control that flips only once the app hears back (a switch bound
+    //     to a PATCH round trip): the read-back waits for it, tapping once.
+    // -------------------------------------------------------------------------
+
+    _testWithSemantics(
+      '(x) a switch that flips after a round trip reads verified: true and is '
+      'tapped once',
+      (WidgetTester tester) async {
+        tester.view.physicalSize = const Size(800, 600);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+
+        bool enabled = false;
+        int changes = 0;
+        await tester.pumpWidget(
+          MaterialApp(
+            home: StatefulBuilder(
+              builder: (context, setState) => Scaffold(
+                body: Switch(
+                  value: enabled,
+                  onChanged: (v) {
+                    changes++;
+                    // The server answers 400 ms later; only then does the
+                    // app show the new state.
+                    Timer(
+                      const Duration(milliseconds: 400),
+                      () => setState(() => enabled = v),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ),
+        );
+
+        final Element element = tester.element(find.byType(Switch));
+        final RenderBox box = element.findRenderObject()! as RenderBox;
+        final String ref = registerRefForTesting(
+          rect: box.localToGlobal(Offset.zero) & box.size,
+          element: element,
+          groupId: 'g',
+          isTextField: false,
+        );
+
+        final response = await _drive(
+          tester,
+          tapirSetCheckboxHandler('ext.tapir.set_checkbox', <String, String>{
+            'ref': ref,
+            'value': 'true',
+          }),
+        );
+
+        expect(changes, 1, reason: 'the settle wait never taps again');
+        expect(enabled, isTrue);
+        final Map<String, dynamic> decoded =
+            jsonDecode(response.result!) as Map<String, dynamic>;
+        expect(decoded['previousValue'], isFalse);
+        expect(decoded['value'], isTrue);
+        expect(decoded['toggled'], isTrue);
+        final Map<String, dynamic> effect =
+            decoded['effect'] as Map<String, dynamic>;
+        expect(effect['before'], isFalse);
+        expect(effect['after'], isTrue);
+        expect(effect['verified'], isTrue);
+      },
+    );
+
+    _testWithSemantics(
+      '(x) a checkbox that flips at once answers without waiting out the '
+      'settle window',
+      (WidgetTester tester) async {
+        tester.view.physicalSize = const Size(800, 600);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+
+        bool checkValue = false;
+        await tester.pumpWidget(
+          MaterialApp(
+            home: StatefulBuilder(
+              builder: (context, setState) => Scaffold(
+                body: Checkbox(
+                  value: checkValue,
+                  onChanged: (v) => setState(() => checkValue = v ?? false),
+                ),
+              ),
+            ),
+          ),
+        );
+
+        final Element element = tester.element(find.byType(Checkbox));
+        final RenderBox box = element.findRenderObject()! as RenderBox;
+        final String ref = registerRefForTesting(
+          rect: box.localToGlobal(Offset.zero) & box.size,
+          element: element,
+          groupId: 'g',
+          isTextField: false,
+        );
+
+        bool done = false;
+        final Future<developer.ServiceExtensionResponse> future =
+            tapirSetCheckboxHandler('ext.tapir.set_checkbox', <String, String>{
+              'ref': ref,
+              'value': 'true',
+            }).whenComplete(() => done = true);
+        int elapsedMs = 0;
+        while (!done && elapsedMs < 3000) {
+          await tester.pump(const Duration(milliseconds: 20));
+          elapsedMs += 20;
+        }
+
+        expect(done, isTrue);
+        expect(elapsedMs, lessThan(400));
+        final Map<String, dynamic> decoded =
+            jsonDecode((await future).result!) as Map<String, dynamic>;
+        expect((decoded['effect'] as Map<String, dynamic>)['verified'], isTrue);
+      },
+    );
+
     _testWithSemantics(
       'a checkbox that removes itself when ticked toggles but reads '
       'verified: false, since nothing is left to read back',
