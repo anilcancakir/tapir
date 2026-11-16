@@ -735,6 +735,10 @@ class TapirDowelProvider extends DowelServiceProvider {
           '(returns immediately with zero pops).\n'
           '- Does NOT pop the root route; the underlying screen '
           'remains.\n'
+          '- A modal whose route guards its exit (a go_router onExit '
+          'overlay) is popped once and given a few frames; if its guard '
+          'refuses it stays open, is not counted, and the modals below it '
+          'on that Navigator stay too.\n'
           '- For dismissing a single specific dialog, prefer tapir_tap '
           'on the dialog\'s explicit Cancel button.',
       inputSchema: <String, dynamic>{
@@ -1370,7 +1374,10 @@ class TapirDowelProvider extends DowelServiceProvider {
           '- Returns `{ref, previousValue, value, toggled, effect}`: '
           '`toggled` says whether a tap was issued, `previousValue` is null '
           'for a mixed control, and `value`, `effect.after` and '
-          '`effect.verified` report the state read back after the tap.\n'
+          '`effect.verified` report the state read back after the tap, '
+          'polled for up to 1.5 s (no second tap) while it differs from '
+          '`value`, so a switch the app flips after a server round trip '
+          'still reads as verified.\n'
           '- A control the tap removes or rebuilds (an "I agree" box that '
           'hides once ticked) has nothing left to read back, so it answers '
           '`verified: false` although the toggle worked; snap again to '

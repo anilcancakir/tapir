@@ -512,6 +512,74 @@ Future<void> main() async {
     });
 
     test(
+      'INFO "Magic-stack detected, integration wired" when main.dart wires '
+      'the integration through the MagicDevtools.installPost wrapper',
+      () async {
+        // The wiring lines of a real Magic app on magic_devtools 1.x, which
+        // installs MagicTapirIntegration inside MagicDevtools.installPost.
+        TapirDoctorCommand.mainDartReader = (String path) => '''
+import 'package:flutter/foundation.dart' show kReleaseMode;
+import 'package:magic/magic.dart';
+import 'package:magic_devtools/magic_devtools.dart';
+
+Future<void> _boot() async {
+  if (!kReleaseMode) MagicDevtools.installPre();
+
+  await Magic.init(
+    configFactories: [
+      () => appConfig,
+    ],
+  );
+
+  if (!kReleaseMode) MagicDevtools.installPost();
+}
+''';
+        TapirDoctorCommand.magicDevtoolsTapirProbe = () =>
+            MagicDevtoolsTapirSupport.available;
+
+        final output = BufferedOutput();
+        final exit = await TapirDoctorCommand().handle(
+          DowelContext.bare(MapInput(const {}), output),
+        );
+
+        expect(exit, equals(0));
+        expect(
+          output.content,
+          contains('Magic-stack detected, integration wired'),
+        );
+        expect(
+          output.content,
+          isNot(contains('MagicTapirIntegration missing')),
+        );
+      },
+    );
+
+    test('INFO "Magic detected but MagicTapirIntegration missing" when '
+        'main.dart calls only MagicDevtools.installPre, which wires no Magic '
+        'enrichers', () async {
+      TapirDoctorCommand.mainDartReader = (String path) => '''
+import 'package:magic/magic.dart';
+import 'package:magic_devtools/magic_devtools.dart';
+
+Future<void> main() async {
+  if (!kReleaseMode) MagicDevtools.installPre();
+  await Magic.init();
+  runApp(const MagicApplication());
+}
+''';
+      TapirDoctorCommand.magicDevtoolsTapirProbe = () =>
+          MagicDevtoolsTapirSupport.available;
+
+      final output = BufferedOutput();
+      final exit = await TapirDoctorCommand().handle(
+        DowelContext.bare(MapInput(const {}), output),
+      );
+
+      expect(exit, equals(0));
+      expect(output.content, contains('MagicTapirIntegration missing'));
+    });
+
+    test(
       'INFO "vanilla Flutter detected" when main.dart has neither Magic.init '
       'nor MagicTapirIntegration.install',
       () async {

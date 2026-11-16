@@ -305,6 +305,11 @@ Dispatch: `ext.tapir.dismiss_modals`
 Pop every modal route (dialog, bottom sheet, popup) currently above the first persistent
 route. Idempotent.
 
+A modal whose route guards its own exit (a go_router `GoRoute` with `onExit`) is popped once
+and given a few frames to leave. One that leaves is counted and dismissal carries on below it;
+one whose guard refuses stays open, is not counted, and ends dismissal on that Navigator, so
+the modals below it stay too. The call always returns.
+
 ### Input schema
 
 No parameters.
@@ -312,7 +317,7 @@ No parameters.
 ### Returns
 
 Success: `{ popped: <int> }`: the number of modals that were popped. `0` when no modals
-were open.
+were open, or when the only one open refused to leave.
 
 Error: never; safe to call speculatively.
 
@@ -1440,7 +1445,10 @@ mixed checkbox. `toggled` is `false` when the state already matched. `value` is 
 read back after the tap, not the request, so it equals `effect.after`: a control whose owner
 ignored the tap answers `value: false` for a request of `true`, with `effect.verified:
 false`. `effect` is the `checked` block (`verified`, `before`, `after`) read back after the
-tap, so a parent that refuses the change reads `verified: false`. When the gate could not
+tap, so a parent that refuses the change reads `verified: false`. While the read differs
+from the request it is repeated every 50 ms for up to 1.5 s, with no second tap, so a control
+the app flips only once a request answers (a switch bound to a PATCH) reads `verified: true`;
+one that flips at once answers without the wait. When the gate could not
 confirm the control receives the event, the response also carries the `checks` block (see
 [Actionability gate](../reference/actionability-gate.md#what-the-gate-could-not-prove)); it
 is absent on a confirmed pass and on a call that tapped nothing.
