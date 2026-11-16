@@ -23,6 +23,8 @@ flutter pub get
 dart run tapir start --device=chrome --cdp-port=9333
 ```
 
+A `--cdp-port` session runs flutter on the `web-server` device, which cannot evaluate: `tapir_evaluate` and `dowel tinker` answer with an error saying so. Leave `--cdp-port` out when you need to evaluate.
+
 Once the app is up, run `tapir:snap` in the same directory to walk the live Semantics tree. The example has many widgets, so narrow the walk with `--grep` to the counter button:
 
 ```bash

@@ -797,6 +797,16 @@ class TapirDoctorCommand extends DowelCommand {
       return;
     }
 
+    // --cdp-port always runs flutter on the web-server device, so the note
+    // holds whether or not the probe below finds the port healthy.
+    ctx.output.info(
+      'Evaluate: unavailable on this session (the web-server device has no '
+      'evaluate, so tapir_evaluate, dowel_tinker and `dowel tinker` fail). '
+      'Run `dowel stop`, then `dowel start --device=chrome` without '
+      '--cdp-port to evaluate; --cdp-port keeps the CDP commands and gives '
+      'up evaluate.',
+    );
+
     final int? webPort = _asInt(state?['webPort']);
     final TapirCdpSessionReport? report = await cdpSessionProbe(
       cdpPort,

@@ -410,6 +410,12 @@ without waiting, so the result is a reference to the wrapper's `Future`, not its
 value. The `ext.tapir.evaluate` extension is a debug-only sentinel that never evaluates
 by itself.
 
+A session started with `--cdp-port` cannot evaluate: dowel runs flutter on the
+`web-server` device there, which has no VM Service `evaluate`, so the tool answers with
+one error saying so. Run `dowel stop`, then `dowel start --device=chrome` without
+`--cdp-port` to evaluate; that gives up the CDP-only commands. `tapir:doctor` prints the
+same note for a session that records a `cdpPort`.
+
 ### Input schema
 
 | Parameter | Type | Required | Description |
