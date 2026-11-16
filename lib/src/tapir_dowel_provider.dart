@@ -989,6 +989,11 @@ class TapirDowelProvider extends DowelServiceProvider {
           'comes back as an MCP error result, never a crash.\n'
           '- An expression with `await` returns the wrapper\'s Future, not '
           'its completed value: the VM evaluates it without waiting.\n'
+          '- A session started with `--cdp-port` cannot evaluate (the '
+          'web-server device has no `evaluate`) and returns an error '
+          '(dowel 1.0.4 and newer says why in one line); '
+          '`dowel start --device=chrome` without `--cdp-port` '
+          'evaluates.\n'
           '- For UI assertions prefer tapir_snap; this tool is for '
           'state inspection that lives below the Semantics tree.',
       inputSchema: <String, dynamic>{

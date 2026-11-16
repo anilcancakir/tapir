@@ -10,7 +10,7 @@
 flutter pub add tapir
 dart run tapir tapir:install          # patches lib/main.dart, scaffolds ./bin/dowel, registers the plugin
 dart run tapir mcp:install            # the `dowel` entry in .mcp.json
-./bin/dowel start --device=chrome     # add --cdp-port=9222 for the web-only CDP verbs
+./bin/dowel start --device=chrome     # --cdp-port=9222 adds the web-only CDP verbs and gives up tapir_evaluate
 ./bin/dowel tapir:snap                # YAML tree with [ref=eN] tokens
 ```
 
