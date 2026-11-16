@@ -735,6 +735,10 @@ class TapirDowelProvider extends DowelServiceProvider {
           '(returns immediately with zero pops).\n'
           '- Does NOT pop the root route; the underlying screen '
           'remains.\n'
+          '- A modal whose route guards its exit (a go_router onExit '
+          'overlay) is popped once and given a few frames; if its guard '
+          'refuses it stays open, is not counted, and the modals below it '
+          'on that Navigator stay too.\n'
           '- For dismissing a single specific dialog, prefer tapir_tap '
           'on the dialog\'s explicit Cancel button.',
       inputSchema: <String, dynamic>{
