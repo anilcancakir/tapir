@@ -116,7 +116,8 @@ final class TapirAppReport {
 ///      exits non-zero.
 ///   5. **Magic-init detection** ; reads `lib/main.dart` and reports whether
 ///      the consumer wired `Magic.init(` alongside `MagicTapirIntegration.
-///      install()`. INFO only ; never fails the doctor regardless of the
+///      install()` or magic_devtools' `MagicDevtools.installPost()` wrapper
+///      around it. INFO only ; never fails the doctor regardless of the
 ///      consumer stack. Advice to wire the integration is given only when
 ///      the resolved `magic_devtools` ships `lib/tapir.dart`; otherwise the
 ///      row says what to upgrade or add.
@@ -608,9 +609,11 @@ class TapirDoctorCommand extends DowelCommand {
     }
 
     final bool hasMagicInit = source.contains('Magic.init(');
-    final bool hasMagicIntegration = source.contains(
-      'MagicTapirIntegration.install',
-    );
+    // magic_devtools' one-call wrapper installs MagicTapirIntegration inside
+    // MagicDevtools.installPost, so either call wires the integration.
+    final bool hasMagicIntegration =
+        source.contains('MagicTapirIntegration.install') ||
+        source.contains('MagicDevtools.installPost');
 
     if (hasMagicInit && hasMagicIntegration) {
       ctx.output.info('$label: Magic-stack detected, integration wired');
