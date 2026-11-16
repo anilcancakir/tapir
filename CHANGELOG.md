@@ -10,6 +10,7 @@ This project follows [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.
 
 ### Fixed
 
+- **`tapir:doctor` accepts the `MagicDevtools.installPost()` wrapper as Magic wiring.** An app on `magic_devtools` 1.x that calls `MagicDevtools.installPre()` and `MagicDevtools.installPost()` got `Magic detected but MagicTapirIntegration missing; wire it with tapir:install`, because the Magic-init check looked only for `MagicTapirIntegration.install`, which `installPost` calls itself. Either `MagicTapirIntegration.install()` or `MagicDevtools.installPost()` now reads as `Magic-stack detected, integration wired`; `installPre()` alone, or neither call, still gets the advice. (`lib/src/commands/tapir_doctor_command.dart`, `doc/commands/tapir-doctor.md`)
 - **`tapir_set_checkbox` waits for a control that flips after a round trip.** A switch the app updates only once its PATCH answers still showed the old state when the handler read it back right after the tap, so the call answered `verified: false` and the CLI exited 1 although the toggle worked and persisted. While the read differs from the requested value it is now repeated every 50 ms for up to 1.5 s, with no second tap; a control that flips at once answers at once, and one that ignores the tap still reads `verified: false` after the window. The response shape is unchanged. (`lib/src/extensions/ext_checkbox.dart`, `lib/src/tapir_dowel_provider.dart`, `skills/tapir/`, `doc/mcp/tool-reference.md`)
 
 ## [1.0.1] - 2026-11-15
