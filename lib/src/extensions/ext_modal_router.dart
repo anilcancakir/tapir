@@ -11,6 +11,7 @@ import '../utils/actionability_gate.dart' show resolveViewFor;
 import '../utils/tapir_register.dart';
 import '../utils/tapir_response.dart';
 import '../utils/error_envelope.dart';
+import '../utils/frame_sync.dart';
 import '../utils/key_press.dart';
 import '../utils/perf_interaction.dart';
 
@@ -75,6 +76,15 @@ List<NavigatorState> _collectNavigatorsInTree(Element root) {
   return found;
 }
 
+/// How many frames a modal whose pop was refused gets to leave on its own.
+///
+/// A router that guards a route's exit (go_router's `GoRoute.onExit`) refuses
+/// the pop synchronously, decides in a microtask and removes an allowed route
+/// when it rebuilds its pages on the next frame. Three frames cover that with
+/// room for a slower rebuild; a guard that refuses, or an async exit that
+/// never lands, costs at most three [awaitFrameOrTimeout] waits.
+const int _kGuardedExitFrames = 3;
+
 /// Dismisses all modal routes above the current page route across ALL
 /// [NavigatorState] instances in the widget tree, and returns the total count
 /// of routes popped.
@@ -84,13 +94,20 @@ List<NavigatorState> _collectNavigatorsInTree(Element root) {
 ///    collect every [NavigatorState]. The walk is necessary because
 ///    [Navigator.maybeOf] requires a descendant context of the navigator, which
 ///    is not available from the root element.
-/// 2. Process each navigator newest-scope-first (reversed DFS order) using
-///    [NavigatorState.popUntil] with a `(r) => r is! PopupRoute` predicate.
-///    This safely dismisses [ModalBottomSheetRoute] (nearest navigator, the
-///    default for [showModalBottomSheet]) and [RawDialogRoute]/[DialogRoute]
-///    (root navigator, the default for [showDialog]) in a single pass per
-///    navigator without any inter-pop frame awaits.
-/// 3. Count each [PopupRoute] popped across all navigators and return the sum.
+/// 2. Process each navigator newest-scope-first (reversed DFS order), popping
+///    its top [PopupRoute] one at a time until a page route is on top. This
+///    dismisses [ModalBottomSheetRoute] (nearest navigator, the default for
+///    [showModalBottomSheet]) and [RawDialogRoute]/[DialogRoute] (root
+///    navigator, the default for [showDialog]). A plain modal leaves inside
+///    its pop, so no frame is awaited for it.
+/// 3. Count each [PopupRoute] that left across all navigators and return the
+///    sum.
+///
+/// A modal whose exit is guarded (a go_router `onExit` route) is popped once
+/// and given [_kGuardedExitFrames] frames to leave. One that leaves counts and
+/// dismissal carries on below it; one that is still there (the guard refused,
+/// or its exit never landed) stays open, is not counted, and ends dismissal on
+/// that navigator. The call never pops a route twice and always returns.
 ///
 /// Returns the total number of routes popped (0 when no modals are open or
 /// when the widget tree is not yet initialised). The page navigation stack is
@@ -112,20 +129,56 @@ Future<int> dismissAllModals() async {
   //    modals. The DFS walk finds the root navigator first, so reversing gives
   //    us innermost-first order.
   for (final NavigatorState navigator in navigators.reversed) {
-    // Use popUntil to remove all PopupRoute entries atomically. The predicate
-    // returns false (keep popping) for each PopupRoute, and true (stop) for
-    // the first non-modal route. Each time the predicate receives a PopupRoute
-    // it increments the counter before returning false.
-    navigator.popUntil((Route<dynamic> route) {
-      if (route is PopupRoute) {
-        popped++;
-        return false; // pop this modal route.
-      }
-      return true; // stop at the first page route.
-    });
+    popped += await _dismissModalsOn(navigator);
   }
 
   return popped;
+}
+
+/// Pops the [PopupRoute]s on top of [navigator] one at a time and returns how
+/// many left.
+///
+/// Never loops over a pop that did not advance: a synchronous `popUntil` over
+/// a guarded route re-pops a route that cannot leave until a microtask runs,
+/// and the microtask never gets to run, so the main thread spins forever.
+Future<int> _dismissModalsOn(NavigatorState navigator) async {
+  int popped = 0;
+
+  while (navigator.mounted) {
+    final Route<dynamic>? top = _topRoute(navigator);
+    if (top is! PopupRoute) return popped;
+
+    // 1. A route holding local history entries spends this pop on its newest
+    //    entry and stays; the entries are finite, so pop again on the next
+    //    pass without counting.
+    final bool popsInternally = top.willHandlePopInternally;
+    navigator.pop();
+    if (popsInternally) continue;
+
+    // 2. A plain modal has already left; a guarded one gets a few frames for
+    //    its exit to land.
+    for (int frame = 0; frame < _kGuardedExitFrames && top.isActive; frame++) {
+      await awaitFrameOrTimeout();
+    }
+
+    // 3. Still there: the guard refused or the exit never landed. Leave it
+    //    open rather than popping it again.
+    if (top.isActive) return popped;
+    popped++;
+  }
+
+  return popped;
+}
+
+/// The route on top of [navigator], or `null` when its history is empty.
+Route<dynamic>? _topRoute(NavigatorState navigator) {
+  Route<dynamic>? top;
+  navigator.popUntil((Route<dynamic> route) {
+    top = route;
+    return true; // inspect only; never pop here.
+  });
+
+  return top;
 }
 
 // ---------------------------------------------------------------------------

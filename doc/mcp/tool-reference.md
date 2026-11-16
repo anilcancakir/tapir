@@ -305,6 +305,11 @@ Dispatch: `ext.tapir.dismiss_modals`
 Pop every modal route (dialog, bottom sheet, popup) currently above the first persistent
 route. Idempotent.
 
+A modal whose route guards its own exit (a go_router `GoRoute` with `onExit`) is popped once
+and given a few frames to leave. One that leaves is counted and dismissal carries on below it;
+one whose guard refuses stays open, is not counted, and ends dismissal on that Navigator, so
+the modals below it stay too. The call always returns.
+
 ### Input schema
 
 No parameters.
@@ -312,7 +317,7 @@ No parameters.
 ### Returns
 
 Success: `{ popped: <int> }`: the number of modals that were popped. `0` when no modals
-were open.
+were open, or when the only one open refused to leave.
 
 Error: never; safe to call speculatively.
 

@@ -1,19 +1,19 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:material_ui/material_ui.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:tapir/src/extensions/ext_modal_router.dart';
 
 void main() {
-  // NOTE: The original implementation awaited endOfFrame between pops, which
-  // hangs the flutter_test fake-clock harness when real modal routes are open.
-  //
-  // The fixed implementation uses popUntil per NavigatorState with no
-  // endOfFrame waits, so real modal routes CAN be tested here. Tests that open
-  // a modal must call tester.pump() after dismissAllModals() to settle the
-  // widget tree.
+  // NOTE: dismissAllModals awaits no frame for a modal that leaves inside its
+  // pop, so plain modals can be dismissed here with a bare await. A modal that
+  // guards its exit is given frames to leave, so those tests drive the call
+  // through _dismissPumping. Tests that open a modal must call tester.pump()
+  // after dismissAllModals() to settle the widget tree.
 
   group('dismissAllModals helper', () {
     testWidgets('returns 0 when binding root is unset', (tester) async {
@@ -79,11 +79,9 @@ void main() {
 
     testWidgets('dismisses two stacked PopupRoutes on the same navigator; '
         'returns additive total (popped==2)', (tester) async {
-      // Reproduce the multi-modal count bug: the original implementation
-      // only popped one PopupRoute per call because it awaited endOfFrame
-      // after each pop (which would hang in test harness) and was
-      // structured as a one-at-a-time loop. The new popUntil-per-navigator
-      // approach dismisses ALL PopupRoutes on each navigator atomically.
+      // Reproduce the multi-modal count bug: an early implementation only
+      // popped one PopupRoute per call. Every PopupRoute on the navigator
+      // must go in one call.
       //
       // showDialog defaults useRootNavigator: true and showModalBottomSheet
       // defaults useRootNavigator: false. In a single-navigator app both
@@ -137,6 +135,142 @@ void main() {
       // Home page must still be present (page route was NOT popped).
       expect(find.text('home'), findsOneWidget);
       expect(nav.canPop(), isFalse);
+    });
+  });
+
+  group('dismissAllModals over a route that guards its own exit', () {
+    /// Mounts a one-page app and answers its root Navigator.
+    Future<NavigatorState> mountHome(WidgetTester tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(home: Scaffold(body: Text('home'))),
+      );
+
+      return tester.state<NavigatorState>(find.byType(Navigator));
+    }
+
+    /// Pushes [route] on [navigator] and lets it land.
+    Future<void> open(
+      WidgetTester tester,
+      NavigatorState navigator,
+      Route<void> route,
+    ) async {
+      unawaited(navigator.push(route));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('an exit the guard allows is dismissed and counted', (
+      tester,
+    ) async {
+      final NavigatorState navigator = await mountHome(tester);
+      final _FakeModalRoute sheet = _FakeModalRoute(
+        label: 'guarded-sheet',
+        guard: _ExitGuard.allow,
+      );
+      await open(tester, navigator, sheet);
+
+      final int popped = await _dismissPumping(tester);
+      await tester.pumpAndSettle();
+
+      expect(popped, equals(1));
+      expect(sheet.isActive, isFalse);
+      expect(find.text('guarded-sheet'), findsNothing);
+      expect(find.text('home'), findsOneWidget);
+    });
+
+    testWidgets('an exit the guard refuses leaves the modal open, uncounted', (
+      tester,
+    ) async {
+      final NavigatorState navigator = await mountHome(tester);
+      final _FakeModalRoute sheet = _FakeModalRoute(
+        label: 'refusing-sheet',
+        guard: _ExitGuard.refuse,
+      );
+      await open(tester, navigator, sheet);
+
+      final int popped = await _dismissPumping(tester);
+      await tester.pumpAndSettle();
+
+      expect(popped, equals(0));
+      expect(sheet.isCurrent, isTrue);
+      expect(sheet.popRequests, equals(1), reason: 'one pop, never retried');
+      expect(find.text('refusing-sheet'), findsOneWidget);
+    });
+
+    testWidgets('a plain modal above a refusing one is dismissed; the refusing '
+        'one stays', (tester) async {
+      final NavigatorState navigator = await mountHome(tester);
+      final _FakeModalRoute refusing = _FakeModalRoute(
+        label: 'refusing-sheet',
+        guard: _ExitGuard.refuse,
+      );
+      final _FakeModalRoute plain = _FakeModalRoute(label: 'plain-dialog');
+      await open(tester, navigator, refusing);
+      await open(tester, navigator, plain);
+
+      final int popped = await _dismissPumping(tester);
+      await tester.pumpAndSettle();
+
+      expect(popped, equals(1));
+      expect(plain.isActive, isFalse);
+      expect(refusing.isCurrent, isTrue);
+    });
+
+    testWidgets('dismissal carries on below a modal whose guard allows exit', (
+      tester,
+    ) async {
+      final NavigatorState navigator = await mountHome(tester);
+      final _FakeModalRoute plain = _FakeModalRoute(label: 'plain-dialog');
+      final _FakeModalRoute guarded = _FakeModalRoute(
+        label: 'guarded-sheet',
+        guard: _ExitGuard.allow,
+      );
+      await open(tester, navigator, plain);
+      await open(tester, navigator, guarded);
+
+      final int popped = await _dismissPumping(tester);
+      await tester.pumpAndSettle();
+
+      expect(popped, equals(2));
+      expect(guarded.isActive, isFalse);
+      expect(plain.isActive, isFalse);
+      expect(navigator.canPop(), isFalse);
+    });
+
+    testWidgets('nested navigators are still cleared innermost first', (
+      tester,
+    ) async {
+      final GlobalKey<NavigatorState> innerKey = GlobalKey<NavigatorState>();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Navigator(
+            key: innerKey,
+            onGenerateRoute: (RouteSettings settings) =>
+                MaterialPageRoute<void>(
+                  builder: (BuildContext context) => const Text('inner-home'),
+                ),
+          ),
+        ),
+      );
+      final NavigatorState root = tester.state<NavigatorState>(
+        find.byType(Navigator).first,
+      );
+      final List<String> dismissed = <String>[];
+      await open(
+        tester,
+        root,
+        _FakeModalRoute(label: 'outer-modal', popLog: dismissed),
+      );
+      await open(
+        tester,
+        innerKey.currentState!,
+        _FakeModalRoute(label: 'inner-modal', popLog: dismissed),
+      );
+
+      final int popped = await _dismissPumping(tester);
+      await tester.pumpAndSettle();
+
+      expect(popped, equals(2));
+      expect(dismissed, equals(<String>['inner-modal', 'outer-modal']));
     });
   });
 
@@ -378,6 +512,110 @@ void main() {
       expect(find.text('handler-sheet'), findsNothing);
     });
   });
+}
+
+/// Runs [dismissAllModals] while pumping frames, so its frame waits resolve
+/// under the fake clock, and fails instead of hanging when it never returns.
+Future<int> _dismissPumping(WidgetTester tester) async {
+  int? popped;
+  Object? failure;
+  unawaited(
+    dismissAllModals().then(
+      (int value) => popped = value,
+      onError: (Object error) => failure = error,
+    ),
+  );
+  for (int frame = 0; frame < 40; frame++) {
+    if (popped != null || failure != null) break;
+    await tester.pump(const Duration(milliseconds: 50));
+  }
+  if (failure != null) throw failure!;
+  expect(popped, isNotNull, reason: 'dismissAllModals did not return');
+
+  return popped!;
+}
+
+/// How a [_FakeModalRoute] answers a pop.
+enum _ExitGuard {
+  /// No guard: the pop lands at once, as a plain dialog's does.
+  none,
+
+  /// The pop is refused, then the exit lands on the next frame.
+  allow,
+
+  /// The pop is refused and the modal stays.
+  refuse,
+}
+
+/// A modal whose guarded pop behaves the way go_router 18 treats a page whose
+/// `GoRoute` has `onExit`: `GoRouterDelegate._handlePopPageWithRouteMatch`
+/// refuses the pop synchronously, runs `onExit` in a `scheduleMicrotask`, and
+/// an exit it allows leaves the Navigator only when the Router rebuilds the
+/// page list on the next frame.
+///
+/// go_router is not a dev dependency, and its refusal reaches the Navigator
+/// through the deprecated `onPopPage`, so the refusal sits in [didPop]
+/// instead: [NavigatorState.pop] keeps the route current either way. A pop
+/// refused more than a handful of times throws, so a dismiss loop that never
+/// lets the exit land fails the test rather than freezing the runner.
+final class _FakeModalRoute extends PopupRoute<void> {
+  _FakeModalRoute({
+    required this.label,
+    this.guard = _ExitGuard.none,
+    this.popLog,
+  });
+
+  final String label;
+
+  final _ExitGuard guard;
+
+  /// Receives [label] when a pop of this route is requested.
+  final List<String>? popLog;
+
+  /// How many times a pop of this route has been requested.
+  int popRequests = 0;
+
+  @override
+  bool didPop(void result) {
+    popRequests++;
+    popLog?.add(label);
+    if (guard == _ExitGuard.none) return super.didPop(result);
+
+    if (popRequests > 5) {
+      throw StateError(
+        'pop of "$label" refused $popRequests times in a row: the dismiss '
+        'loop is spinning over a pop that did not advance',
+      );
+    }
+    scheduleMicrotask(() {
+      if (guard == _ExitGuard.refuse) return;
+      SchedulerBinding.instance.addPostFrameCallback((Duration _) {
+        if (isActive) navigator!.removeRoute(this);
+      });
+      SchedulerBinding.instance.scheduleFrame();
+    });
+
+    return false;
+  }
+
+  @override
+  Color? get barrierColor => null;
+
+  @override
+  bool get barrierDismissible => false;
+
+  @override
+  String? get barrierLabel => null;
+
+  @override
+  Duration get transitionDuration => Duration.zero;
+
+  @override
+  Widget buildPage(
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+  ) => Center(child: Text(label));
 }
 
 class _TestPopupRoute<T> extends PopupRoute<T> {

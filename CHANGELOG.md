@@ -8,6 +8,10 @@ This project follows [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+
+- **`tapir_dismiss_modals`, `tapir_reset_overlays` and `tapir_navigate` no longer freeze the app over a modal that guards its exit.** go_router refuses the pop of a `GoRoute` with `onExit` and decides in a microtask, so the synchronous `popUntil` re-popped the same route forever and the page stopped answering until a reload. Modals are now popped one at a time; a guarded one is popped once and given three frames to leave. One that leaves is counted and dismissal carries on; one whose guard refuses stays open, is not counted and ends dismissal on its Navigator. `tapir_navigate` then reaches its adapter as before, and its URL check still decides `navigated`. (`lib/src/extensions/ext_modal_router.dart`, `lib/src/tapir_dowel_provider.dart`, `skills/tapir/`, `doc/`)
+
 ## [1.0.1] - 2026-11-15
 
 ### Changed

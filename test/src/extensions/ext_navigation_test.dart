@@ -322,6 +322,52 @@ void main() {
       );
     });
 
+    testWidgets('a modal whose guard refuses exit stays open and the adapter '
+        'still receives the route', (WidgetTester tester) async {
+      String? routeSeenByAdapter;
+      TapirPlugin.registerNavigateAdapter((String route) async {
+        routeSeenByAdapter = route;
+        return true;
+      });
+      addTearDown(() => TapirPlugin.registerNavigateAdapter(null));
+      await tester.pumpWidget(
+        const MaterialApp(home: Scaffold(body: Text('Home'))),
+      );
+      final _RefusingModalRoute sheet = _RefusingModalRoute();
+      unawaited(
+        tester.state<NavigatorState>(find.byType(Navigator)).push(sheet),
+      );
+      await tester.pumpAndSettle();
+
+      developer.ServiceExtensionResponse? response;
+      Object? failure;
+      unawaited(
+        extTapirNavigateHandler('ext.tapir.navigate', <String, String>{
+          'route': '/settings',
+          'includeSnapshot': 'false',
+        }).then(
+          (developer.ServiceExtensionResponse value) => response = value,
+          onError: (Object error) => failure = error,
+        ),
+      );
+      for (int frame = 0; frame < 40; frame++) {
+        if (response != null || failure != null) break;
+        await tester.pump(const Duration(milliseconds: 50));
+      }
+
+      expect(failure, isNull);
+      expect(response, isNotNull, reason: 'the handler did not return');
+      expect(response!.errorCode, isNull, reason: '${response!.errorDetail}');
+      expect(routeSeenByAdapter, equals('/settings'));
+      expect(sheet.isCurrent, isTrue);
+      expect(sheet.popRequests, equals(1));
+
+      sheet.exitAllowed = true;
+      sheet.navigator!.pop();
+      await tester.pumpAndSettle();
+      expect(sheet.isActive, isFalse);
+    });
+
     group('exactPath', () {
       /// Navigates to [route] on a Router sitting at [at], through an adapter
       /// that dispatches nothing, and answers the decoded payload.
@@ -1049,6 +1095,52 @@ void main() {
       registerNavigationExtensions();
     });
   });
+}
+
+/// A modal whose exit guard refuses every pop, the way go_router 18 refuses a
+/// pop of a `GoRoute` with an `onExit` that answers false: the pop is refused
+/// synchronously and the route stays current until [exitAllowed] is set. A pop
+/// requested more than a handful of times throws, so a dismiss loop that spins
+/// over it fails the test rather than freezing the runner.
+final class _RefusingModalRoute extends PopupRoute<void> {
+  int popRequests = 0;
+
+  /// Lets the next pop through, so a test can close the modal itself.
+  bool exitAllowed = false;
+
+  @override
+  bool didPop(void result) {
+    if (exitAllowed) return super.didPop(result);
+
+    popRequests++;
+    if (popRequests > 5) {
+      throw StateError(
+        'pop refused $popRequests times in a row: the dismiss loop is '
+        'spinning over a pop that did not advance',
+      );
+    }
+
+    return false;
+  }
+
+  @override
+  Color? get barrierColor => null;
+
+  @override
+  bool get barrierDismissible => false;
+
+  @override
+  String? get barrierLabel => null;
+
+  @override
+  Duration get transitionDuration => Duration.zero;
+
+  @override
+  Widget buildPage(
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+  ) => const Center(child: Text('refusing-sheet'));
 }
 
 /// A one-screen Router whose provider starts on [location], with no page

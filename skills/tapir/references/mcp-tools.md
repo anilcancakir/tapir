@@ -187,7 +187,7 @@ No params. Returns `{ location, title, uri }`. `uri` is the mounted Router's loc
 
 ### tapir_dismiss_modals, tapir_reset_overlays
 
-`tapir_dismiss_modals`: no params; pops every `PopupRoute` (dialog, sheet, popup menu) on every Navigator. Returns `{ popped }`. `tapir_reset_overlays`: no params; pops every `PopupRoute`, then presses Escape, then taps a Cancel, Dismiss, Close, OK or Done affordance, each layer a no-op once the screen is clear. Returns `{ popped, escaped, dismissTapped }`. Use it for an overlay that is not a `PopupRoute` (an `OverlayEntry`, a barrier dialog); it is safe to call between flows.
+`tapir_dismiss_modals`: no params; pops every `PopupRoute` (dialog, sheet, popup menu) on every Navigator. Returns `{ popped }`. A modal whose route guards its exit (a go_router `onExit` overlay) is popped once and given a few frames: it counts if it leaves; if its guard refuses it stays open, is not counted, and the modals below it on that Navigator stay too. `tapir_reset_overlays`: no params; pops every `PopupRoute`, then presses Escape, then taps a Cancel, Dismiss, Close, OK or Done affordance, each layer a no-op once the screen is clear. Returns `{ popped, escaped, dismissTapped }`. Use it for an overlay that is not a `PopupRoute` (an `OverlayEntry`, a barrier dialog); it is safe to call between flows.
 
 ## Diagnostics
 
