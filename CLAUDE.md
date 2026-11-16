@@ -63,7 +63,7 @@ These change only with a coordinated bump across `tapir`, `magic` and `wind_kit`
 
 1. `release: X.Y.Z` PR: bump the version stamps and promote `## [Unreleased]` to `## [X.Y.Z] - YYYY-MM-DD` with its footer link.
 2. Stamps: `pubspec.yaml`, `server.json` (guarded by a test), `example/pubspec.lock` and the `^X.Y.Z` install snippets in `doc/getting-started/installation.md`. Grep the old version before opening the PR. The skill keeps its own `version:` (and the stamp comment under its frontmatter) in `skills/tapir/SKILL.md`; bump it by hand with the release.
-3. After it merges, tag the merge commit with the bare version: `git tag X.Y.Z && git push origin X.Y.Z`. `publish.yml` validates the tag, the stamps, the dry-run and 160/160 pana points, publishes through OIDC, creates the GitHub Release and mirrors the skill to the registry.
+3. After it merges, tag the merge commit with the bare version: `git tag X.Y.Z && git push origin X.Y.Z`. `publish.yml` validates the tag, the stamps, the dry-run and 160/160 pana points, publishes through OIDC, creates the GitHub Release, mirrors the skill to the skill registry and publishes `server.json` to the MCP registry (the `mcp-registry` job, stable tags only; the registry holds a version once, so a re-run after success fails with "already exists").
 4. A recovery after a failed `Validate` is forward: delete the tag, fix on a PR, tag the new merge commit.
 
 ## CI
