@@ -8,6 +8,10 @@ This project follows [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+
+- **`tapir:doctor` accepts the `MagicDevtools.installPost()` wrapper as Magic wiring.** An app on `magic_devtools` 1.x that calls `MagicDevtools.installPre()` and `MagicDevtools.installPost()` got `Magic detected but MagicTapirIntegration missing; wire it with tapir:install`, because the Magic-init check looked only for `MagicTapirIntegration.install`, which `installPost` calls itself. Either call now reads as `Magic-stack detected, integration wired`; an app with neither still gets the advice. (`lib/src/commands/tapir_doctor_command.dart`, `doc/commands/tapir-doctor.md`)
+
 ## [1.0.1] - 2026-11-15
 
 ### Changed
