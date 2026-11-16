@@ -719,6 +719,197 @@ Future<void> main() async {
       );
     });
 
+    test(
+      'an app wired through the MagicDevtools wrapper is left alone '
+      '(installPre installs TapirPlugin, installPost the Magic integration)',
+      () async {
+        const wrapped = '''
+import 'package:flutter/foundation.dart' show kReleaseMode;
+import 'package:material_ui/material_ui.dart';
+import 'package:magic/magic.dart';
+import 'package:magic_devtools/magic_devtools.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  if (!kReleaseMode) MagicDevtools.installPre();
+  await Magic.init(configFactories: [() => {}]);
+  if (!kReleaseMode) MagicDevtools.installPost();
+  runApp(const MagicApplication());
+}
+''';
+        final mainDartPath = _seedProject(
+          tempDir,
+          pubspecDeps: const {'magic': 'any', 'magic_devtools': 'any'},
+          magicDevtoolsLibrary: 'tapir.dart',
+          mainDartContents: wrapped,
+        );
+        TapirInstallCommand.mainDartPathResolver = () => mainDartPath;
+        TapirInstallCommand.pubspecPathResolver = () =>
+            '${tempDir.path}/pubspec.yaml';
+
+        final exit = await TapirInstallCommand().handle(_ctx());
+
+        expect(exit, equals(0));
+        expect(File(mainDartPath).readAsStringSync(), equals(wrapped));
+      },
+    );
+
+    test(
+      'an app that calls only MagicDevtools.installPre gets the Magic '
+      'integration block but no second TapirPlugin block or import',
+      () async {
+        final mainDartPath = _seedProject(
+          tempDir,
+          pubspecDeps: const {'magic': 'any', 'magic_devtools': 'any'},
+          magicDevtoolsLibrary: 'tapir.dart',
+          mainDartContents: '''
+import 'package:flutter/foundation.dart' show kReleaseMode;
+import 'package:material_ui/material_ui.dart';
+import 'package:magic/magic.dart';
+import 'package:magic_devtools/magic_devtools.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  if (!kReleaseMode) MagicDevtools.installPre();
+  await Magic.init(configFactories: [() => {}]);
+  runApp(const MagicApplication());
+}
+''',
+        );
+        TapirInstallCommand.mainDartPathResolver = () => mainDartPath;
+        TapirInstallCommand.pubspecPathResolver = () =>
+            '${tempDir.path}/pubspec.yaml';
+
+        await TapirInstallCommand().handle(_ctx());
+        final result = File(mainDartPath).readAsStringSync();
+
+        expect(result.contains('TapirPlugin.install();'), isFalse);
+        expect(result.contains("import 'package:tapir/tapir.dart';"), isFalse);
+        expect(
+          'MagicTapirIntegration.install();'.allMatches(result).length,
+          equals(1),
+        );
+        expect(
+          result.contains("import 'package:magic_devtools/tapir.dart';"),
+          isTrue,
+        );
+      },
+    );
+
+    test('a wrapped app is recognised whatever the pubspec indentation: a '
+        'four-space magic_devtools entry still counts', () async {
+      const wrapped = '''
+import 'package:flutter/foundation.dart' show kReleaseMode;
+import 'package:material_ui/material_ui.dart';
+import 'package:magic/magic.dart';
+import 'package:magic_devtools/magic_devtools.dart';
+
+Future<void> main() async {
+  if (!kReleaseMode) MagicDevtools.installPre();
+  await Magic.init(configFactories: [() => {}]);
+  if (!kReleaseMode) MagicDevtools.installPost();
+  runApp(const MagicApplication());
+}
+''';
+      final mainDartPath = _seedProject(
+        tempDir,
+        magicDevtoolsLibrary: 'tapir.dart',
+        mainDartContents: wrapped,
+      );
+      File('${tempDir.path}/pubspec.yaml').writeAsStringSync(
+        [
+          'name: stub_app',
+          'environment:',
+          '  sdk: ">=3.4.0 <4.0.0"',
+          'dependencies:',
+          '    flutter:',
+          '        sdk: flutter',
+          '    magic: any',
+          '    magic_devtools: any',
+          '',
+        ].join('\n'),
+      );
+      TapirInstallCommand.mainDartPathResolver = () => mainDartPath;
+      TapirInstallCommand.pubspecPathResolver = () =>
+          '${tempDir.path}/pubspec.yaml';
+
+      final exit = await TapirInstallCommand().handle(_ctx());
+
+      expect(exit, equals(0));
+      expect(File(mainDartPath).readAsStringSync(), equals(wrapped));
+    });
+
+    test('a wrapped app whose zone wrapper owns the binding gets no '
+        'WidgetsFlutterBinding line', () async {
+      const wrapped = '''
+import 'package:flutter/foundation.dart' show kReleaseMode;
+import 'package:material_ui/material_ui.dart';
+import 'package:magic/magic.dart';
+import 'package:magic_devtools/magic_devtools.dart';
+
+Future<void> main() async {
+  if (!kReleaseMode) MagicDevtools.installPre();
+  await Magic.init(configFactories: [() => {}]);
+  if (!kReleaseMode) MagicDevtools.installPost();
+  runApp(const MagicApplication());
+}
+''';
+      final mainDartPath = _seedProject(
+        tempDir,
+        pubspecDeps: const {'magic': 'any', 'magic_devtools': 'any'},
+        magicDevtoolsLibrary: 'tapir.dart',
+        mainDartContents: wrapped,
+      );
+      TapirInstallCommand.mainDartPathResolver = () => mainDartPath;
+      TapirInstallCommand.pubspecPathResolver = () =>
+          '${tempDir.path}/pubspec.yaml';
+
+      final exit = await TapirInstallCommand().handle(_ctx());
+
+      expect(exit, equals(0));
+      expect(File(mainDartPath).readAsStringSync(), equals(wrapped));
+    });
+
+    test(
+      'a wrapper from a magic_devtools without tapir.dart does not count: '
+      'the TapirPlugin block is added and the upgrade warning shows',
+      () async {
+        final mainDartPath = _seedProject(
+          tempDir,
+          pubspecDeps: const {'magic': 'any', 'magic_devtools': 'any'},
+          magicDevtoolsLibrary: 'dusk.dart',
+          mainDartContents: '''
+import 'package:flutter/foundation.dart' show kReleaseMode;
+import 'package:material_ui/material_ui.dart';
+import 'package:magic/magic.dart';
+import 'package:magic_devtools/magic_devtools.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  if (!kReleaseMode) MagicDevtools.installPre();
+  await Magic.init(configFactories: [() => {}]);
+  if (!kReleaseMode) MagicDevtools.installPost();
+  runApp(const MagicApplication());
+}
+''',
+        );
+        TapirInstallCommand.mainDartPathResolver = () => mainDartPath;
+        TapirInstallCommand.pubspecPathResolver = () =>
+            '${tempDir.path}/pubspec.yaml';
+        final output = BufferedOutput();
+
+        final exit = await TapirInstallCommand().handle(
+          DowelContext.bare(MapInput(const {}), output),
+        );
+
+        expect(exit, equals(0));
+        final result = File(mainDartPath).readAsStringSync();
+        expect('TapirPlugin.install();'.allMatches(result).length, equals(1));
+        expect(result.contains('MagicTapirIntegration'), isFalse);
+        expect(output.content, contains('has no tapir integration yet'));
+      },
+    );
+
     // ------------------------------------------------------------------
     // Missing lib/main.dart returns exit 1
     // ------------------------------------------------------------------

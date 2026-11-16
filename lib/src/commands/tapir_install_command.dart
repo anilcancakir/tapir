@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dowel/dowel.dart';
+import 'package:yaml/yaml.dart';
 
 /// `dowel tapir:install`: one-line bootstrap for the tapir plugin.
 ///
@@ -209,6 +210,10 @@ class TapirInstallCommand extends DowelCommand {
   ///      inject `MagicTapirIntegration.install()` AFTER that call (the
   ///      integration queries `Magic.find<X>()` for the form / nav
   ///      enrichers, so it must run after the container is ready).
+  ///
+  /// An app that calls magic_devtools' `MagicDevtools.installPre()` /
+  /// `installPost()` wrapper already has the matching install calls, so the
+  /// block each one covers is skipped.
   static void _injectRuntimeWiring(DowelContext ctx, String mainDartPath) {
     ctx.output.info('Wiring TapirPlugin into $mainDartPath...');
 
@@ -221,17 +226,33 @@ class TapirInstallCommand extends DowelCommand {
     // snippet, so a re-run neither adds a second block nor an import nothing
     // uses.
     final String original = FileHelper.readFile(mainDartPath);
-    final bool wiresTapir = !original.contains('TapirPlugin.install()');
-    final bool wantsMagic =
-        original.contains('await Magic.init(') &&
-        _hasMagicDevtoolsDep() &&
-        !original.contains('MagicTapirIntegration.install()');
+
     // A magic_devtools release that predates tapir has no `tapir.dart`; its
-    // import would leave a lib/main.dart that does not compile.
-    final MagicDevtoolsTapirSupport magicSupport = wantsMagic
+    // import would leave a lib/main.dart that does not compile, and its
+    // wrapper installs the Dusk integrations, not tapir's.
+    final bool hasMagicDevtools = _hasMagicDevtoolsDep();
+    final MagicDevtoolsTapirSupport magicSupport = hasMagicDevtools
         ? magicDevtoolsTapirSupport(File(pubspecPathResolver()).parent.path)
         : MagicDevtoolsTapirSupport.unresolved;
-    final bool wiresMagic = magicSupport == MagicDevtoolsTapirSupport.available;
+    final bool devtoolsShipsTapir =
+        magicSupport == MagicDevtoolsTapirSupport.available;
+
+    // magic_devtools' one-call wrapper installs both halves itself:
+    // `installPre()` calls `TapirPlugin.install()` and `installPost()` calls
+    // `MagicTapirIntegration.install()`, so an app wired through it needs no
+    // second block, and no import the wrapper's own barrel already carries.
+    final bool tapirViaWrapper =
+        devtoolsShipsTapir && original.contains('MagicDevtools.installPre(');
+    final bool magicViaWrapper =
+        devtoolsShipsTapir && original.contains('MagicDevtools.installPost(');
+    final bool wiresTapir =
+        !original.contains('TapirPlugin.install()') && !tapirViaWrapper;
+    final bool wantsMagic =
+        original.contains('await Magic.init(') &&
+        hasMagicDevtools &&
+        !original.contains('MagicTapirIntegration.install()') &&
+        !magicViaWrapper;
+    final bool wiresMagic = wantsMagic && devtoolsShipsTapir;
 
     // 1. Imports first. ConfigEditor.addImportToFile (delegated by
     //    MainDartEditor.addImport) is idempotent on duplicates.
@@ -241,10 +262,12 @@ class TapirInstallCommand extends DowelCommand {
         "import 'package:flutter/foundation.dart' show kReleaseMode;",
       );
     }
-    MainDartEditor.addImport(
-      mainDartPath,
-      "import 'package:tapir/tapir.dart';",
-    );
+    if (!tapirViaWrapper) {
+      MainDartEditor.addImport(
+        mainDartPath,
+        "import 'package:tapir/tapir.dart';",
+      );
+    }
 
     // 2. Read once, choose the correct anchor, transform via two
     //    pure-functional injects (idempotent: each helper checks
@@ -262,8 +285,11 @@ class TapirInstallCommand extends DowelCommand {
 
     // Magic apps already call WidgetsFlutterBinding.ensureInitialized()
     // before Magic.init, so skip the inject when it is already present
-    // (avoids a duplicate call right above the existing one).
-    if (!source.contains('WidgetsFlutterBinding.ensureInitialized()')) {
+    // (avoids a duplicate call right above the existing one). An app wired
+    // through the wrapper owns its binding already (a zone wrapper such as
+    // MagicSentry.run initialises it inside its own zone), so it gets none.
+    if (!tapirViaWrapper &&
+        !source.contains('WidgetsFlutterBinding.ensureInitialized()')) {
       source = MainDartEditor.injectBeforeAnchor(
         source: source,
         anchor: anchor,
@@ -489,11 +515,20 @@ class TapirInstallCommand extends DowelCommand {
 
   /// Returns true when the consumer's pubspec.yaml lists `magic_devtools:`
   /// (the package that ships MagicTapirIntegration) under `dependencies:` or
-  /// `dev_dependencies:` (2-space indent).
+  /// `dev_dependencies:`, whatever the indentation (a parsed read, not a
+  /// pattern match).
   static bool _hasMagicDevtoolsDep() {
     final pubspec = File(pubspecPathResolver());
     if (!pubspec.existsSync()) return false;
-    return RegExp(r'\n  magic_devtools:').hasMatch(pubspec.readAsStringSync());
+
+    final Object? document = loadYaml(pubspec.readAsStringSync());
+    if (document is! YamlMap) return false;
+
+    return <String>['dependencies', 'dev_dependencies'].any((String section) {
+      final Object? entries = document[section];
+
+      return entries is YamlMap && entries.containsKey('magic_devtools');
+    });
   }
 }
 

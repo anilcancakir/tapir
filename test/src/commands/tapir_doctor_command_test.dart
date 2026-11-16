@@ -511,6 +511,35 @@ Future<void> main() async {
       );
     });
 
+    test('INFO upgrade advice, not "integration wired", when main.dart calls '
+        'MagicDevtools.installPost but the resolved magic_devtools has no '
+        'tapir.dart', () async {
+      // A release that predates tapir has the same wrapper names and
+      // installs the Dusk integrations, so the call wires nothing for tapir.
+      TapirDoctorCommand.mainDartReader = (String path) => '''
+import 'package:magic/magic.dart';
+import 'package:magic_devtools/magic_devtools.dart';
+
+Future<void> main() async {
+  if (!kReleaseMode) MagicDevtools.installPre();
+  await Magic.init();
+  if (!kReleaseMode) MagicDevtools.installPost();
+  runApp(const MagicApplication());
+}
+''';
+      TapirDoctorCommand.magicDevtoolsTapirProbe = () =>
+          MagicDevtoolsTapirSupport.missing;
+
+      final output = BufferedOutput();
+      final exit = await TapirDoctorCommand().handle(
+        DowelContext.bare(MapInput(const {}), output),
+      );
+
+      expect(exit, equals(0));
+      expect(output.content, contains('has no tapir integration yet'));
+      expect(output.content, isNot(contains('integration wired')));
+    });
+
     test(
       'INFO "Magic-stack detected, integration wired" when main.dart wires '
       'the integration through the MagicDevtools.installPost wrapper',
