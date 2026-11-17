@@ -88,7 +88,7 @@ The VM Service handler returns a JSON envelope `{ "snapshot": "<yaml>", "groupId
 - button "Sign in" [ref=e2]
 ```
 
-Each line is `- <role> "<label>"`, with `: "<value>"` after the label when the node has a value and the `[ref=eN]` token on interactive nodes; plain text nodes print as `- text "..."` and carry no ref. Children are indented two spaces under their parent. The `typeable: true` sub-line marks the single surviving `textbox` node after the nested-field collapse described above; it is the node `tapir:type` resolves.
+Each line is `- <role> "<label>"`, with `: "<value>"` after the label when the node has a value and the `[ref=eN]` token on interactive nodes; plain text nodes print as `- text "..."` and carry no ref. A label or value prints escaped (`\n`, `\r`, `\"` and `\\`), so a node is always one line, while `tapir:find`, `tapir:wait_for` and `--grep` match the raw text: undo the escapes of a label copied from here before passing it to one. Children are indented two spaces under their parent. The `typeable: true` sub-line marks the single surviving `textbox` node after the nested-field collapse described above; it is the node `tapir:type` resolves.
 
 A ref line may end with ` [offscreen]` and/or ` [occluded]` after `[ref=eN]`:
 

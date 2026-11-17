@@ -269,6 +269,113 @@ void main() {
       });
     });
 
+    group('line breaks in labels and values', () {
+      List<String> linesOf(String snapshot) => snapshot.split('\n');
+
+      testWidgets('a label with a newline prints on one line with its ref', (
+        WidgetTester tester,
+      ) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(body: _button('Have an account?\nSign in')),
+          ),
+        );
+
+        final String snapshot = (await tapirSnapBuild())['snapshot'] as String;
+        final List<String> lines = linesOf(snapshot);
+        final List<String> matching = lines
+            .where((String l) => l.contains(r'Have an account?\nSign in'))
+            .toList();
+
+        expect(matching, hasLength(1));
+        expect(matching.single, contains('[ref=e'));
+        expect(
+          lines.any((String l) => l.trimLeft().startsWith('Sign in')),
+          isFalse,
+        );
+      });
+
+      testWidgets('a textbox value with a newline prints on one line', (
+        WidgetTester tester,
+      ) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: Semantics(
+                container: true,
+                textField: true,
+                label: 'Notes',
+                value: 'first\nsecond',
+                child: const SizedBox(width: 160, height: 40),
+              ),
+            ),
+          ),
+        );
+
+        final String snapshot = (await tapirSnapBuild())['snapshot'] as String;
+        final List<String> lines = linesOf(snapshot);
+        final List<String> matching = lines
+            .where((String l) => l.contains(r'"first\nsecond"'))
+            .toList();
+
+        expect(matching, hasLength(1));
+        expect(matching.single, contains('[ref=e'));
+        expect(
+          lines.any((String l) => l.trimLeft().startsWith('second')),
+          isFalse,
+        );
+      });
+
+      testWidgets('a text line with a newline and a quote stays on one line', (
+        WidgetTester tester,
+      ) async {
+        await tester.pumpWidget(
+          const MaterialApp(home: Scaffold(body: Text('Say "hi"\nthen leave'))),
+        );
+
+        final String snapshot = (await tapirSnapBuild())['snapshot'] as String;
+        final List<String> lines = linesOf(snapshot);
+        final List<String> matching = lines
+            .where((String l) => l.trimLeft().startsWith('- text "Say'))
+            .toList();
+
+        expect(matching, hasLength(1));
+        expect(
+          matching.single.trim(),
+          equals(r'- text "Say \"hi\"\nthen leave"'),
+        );
+        expect(
+          lines.any((String l) => l.trimLeft().startsWith('then leave')),
+          isFalse,
+        );
+      });
+
+      testWidgets('a carriage return is escaped too', (
+        WidgetTester tester,
+      ) async {
+        await tester.pumpWidget(
+          MaterialApp(home: Scaffold(body: _button('one\r\ntwo'))),
+        );
+
+        final String snapshot = (await tapirSnapBuild())['snapshot'] as String;
+
+        expect(snapshot, contains(r'"one\r\ntwo"'));
+        expect(snapshot, isNot(contains('\r')));
+      });
+
+      testWidgets('a literal backslash n in a label is not read as a newline', (
+        WidgetTester tester,
+      ) async {
+        await tester.pumpWidget(
+          MaterialApp(home: Scaffold(body: _button(r'C:\new'))),
+        );
+
+        final String snapshot = (await tapirSnapBuild())['snapshot'] as String;
+
+        expect(snapshot, contains(r'"C:\\new"'));
+      });
+    });
+
     group('visibility markers', () {
       testWidgets('flags a ref-bearing node outside the viewport', (
         WidgetTester tester,
