@@ -16,6 +16,8 @@ import '../utils/frame_sync.dart';
 import '../utils/perf_interaction.dart';
 import '../utils/tap_owner.dart';
 import 'ext_find.dart';
+import 'ext_modal_router.dart' show topRouteOf;
+import 'ext_navigation.dart' show findOutermostNavigator;
 import 'ext_snapshot.dart' show snapshotForAction;
 import 'ext_wait_find.dart' show findByTextWaitLoop;
 
@@ -67,6 +69,64 @@ String _routeNameOf(Element element) {
     return route?.settings.name ?? '';
   } catch (_) {
     return '';
+  }
+}
+
+/// The top routes a tap can move without touching the target's own token,
+/// captured next to [_captureEffectSignal] and compared by identity.
+///
+/// A dialog, sheet, menu or page is a new route over the target, so the
+/// target-scoped token stays the same. Two navigators are watched: the
+/// outermost one (where `showDialog` pushes by default) and the one that
+/// holds the target (where `showModalBottomSheet`, `showMenu` and a dropdown
+/// push, and the navigator of a go_router `ShellRoute`). Router apps
+/// (go_router, Magic) name no page, so identity, not the name, tells two
+/// routes apart. A route pushed on any other nested navigator is not seen.
+final class _RouteMark {
+  _RouteMark._(this._rootTop, this._nearest, this._nearestTop);
+
+  /// Marks the routes as they stand for [element], the tap target.
+  ///
+  /// The nearest navigator is dropped when it is the outermost one, so it is
+  /// read once; a defunct [element] has no nearest navigator.
+  factory _RouteMark.capture(Element element) {
+    final NavigatorState? root = _outermostNavigator();
+    final NavigatorState? nearest = element.mounted
+        ? Navigator.maybeOf(element)
+        : null;
+    final NavigatorState? watched = identical(nearest, root) ? null : nearest;
+
+    return _RouteMark._(
+      root == null ? null : topRouteOf(root),
+      watched,
+      watched == null ? null : topRouteOf(watched),
+    );
+  }
+
+  final Route<dynamic>? _rootTop;
+  final NavigatorState? _nearest;
+  final Route<dynamic>? _nearestTop;
+
+  /// Whether either watched top route differs now. A nearest navigator the
+  /// tap unmounted counts as moved.
+  bool moved() {
+    final NavigatorState? root = _outermostNavigator();
+    if (!identical(_rootTop, root == null ? null : topRouteOf(root))) {
+      return true;
+    }
+    final NavigatorState? nearest = _nearest;
+    if (nearest == null) return false;
+
+    return !identical(
+      _nearestTop,
+      nearest.mounted ? topRouteOf(nearest) : null,
+    );
+  }
+
+  static NavigatorState? _outermostNavigator() {
+    final Element? root = WidgetsBinding.instance.rootElement;
+
+    return root == null ? null : findOutermostNavigator(root);
   }
 }
 
@@ -479,6 +539,7 @@ Future<developer.ServiceExtensionResponse> tapirTapHandler(
   //    the live rect is valid; falling back to the cached center only when
   //    the live rect is null (sliver / detached / synthetic-test entry).
   final String preSignal = _captureEffectSignal(entry);
+  final _RouteMark routeMark = _RouteMark.capture(entry.element);
   final Offset liveCenter = dispatchRectOf(entry)?.center ?? entry.rect.center;
   // Read before the pointer goes in: a tap that navigates detaches the node.
   // A merge boundary's centre can belong to another handler (#60): when one
@@ -537,8 +598,12 @@ Future<developer.ServiceExtensionResponse> tapirTapHandler(
   // 3. Effect verification. Recapture the TARGET-scoped signal AFTER the
   //    pointer settled and compare it against [preSignal]. A differing token
   //    means the tap produced an observable effect on the target (its own
-  //    label / route changed); an identical token means nothing the agent
-  //    can see happened, which is the reading a bare success hides. The recapture reuses
+  //    label / route changed); an identical token means the target did not
+  //    change, which is the reading a bare success hides. A dialog or page
+  //    pushed over the target leaves that token alone, so [_RouteMark]
+  //    compares the top routes of the root navigator and of the one holding
+  //    the target, and adds `routeChanged` when either moved. The recapture
+  //    reuses
   //    the same [entry] — the live-rect dispatch above keeps the Element /
   //    SemanticsNode identity, so `entry.node.getSemanticsData()` reflects the
   //    post-rebuild subtree. The signal collapses to the route name alone for
@@ -568,7 +633,11 @@ Future<developer.ServiceExtensionResponse> tapirTapHandler(
   }
   try {
     final String postSignal = _captureEffectSignal(entry);
-    payload['effect'] = treeChangedEffect(before: preSignal, after: postSignal);
+    payload['effect'] = treeChangedEffect(
+      before: preSignal,
+      after: postSignal,
+      routeChanged: routeMark.moved(),
+    );
   } catch (e) {
     developer.log(
       '[tapir] ext.tapir.tap: post-dispatch effect signal swallowed '

@@ -123,7 +123,7 @@ For a visual check, `tapir_screenshot { ref: "e7", format: "png" }` before and a
 | `not stable (rect changed by Xpx)` | Wait for the animation (`tapir_wait_for { textGone: ... }`), retry; an endless animation takes `checkStable: false` |
 | `not enabled` | Change the state that disables it; a retry fails the same way |
 | `Query handle ref=qN is stale` | Find or observe again with broader predicates |
-| A success with `effect.changed: false` | Nothing observable moved: check `checks`, `tapPointOutsideOwner`, `warnings` before trying again |
+| A success with `effect.changed: false` | The target did not change; with `routeChanged: true` a dialog, sheet, menu or page moved on the root navigator or the one holding the target, so snap. Without it, check `checks`, `tapPointOutsideOwner`, `warnings` before trying again |
 | `warnings` present | Frames are off; follow its `hint` (web: CDP `Page.bringToFront`), then retry |
 
 ## Field rules from real runs

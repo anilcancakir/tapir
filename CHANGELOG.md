@@ -8,6 +8,10 @@ This project follows [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Fixed
+
+- **A tap that opens or closes a dialog, sheet, menu or page reports the route change.** `effect.changed` measures only the target's own semantics subtree and its enclosing route, and a dialog is a new route over the target, so the tap answered `changed: false` and the summary said "no observable change"; the effect now adds `routeChanged: true` when the top route of the root navigator or of the navigator holding the tapped widget changed (absent otherwise, and `changed` keeps its meaning; a route on another nested navigator is not seen), and the `tapir:tap` summary prints `(route changed; run tapir:snap to see it)` or `(target unchanged)`. Fixes #95. (`lib/src/extensions/ext_pointer.dart`, `lib/src/utils/effect_report.dart`, `lib/src/commands/tapir_tap_command.dart`, `lib/src/tapir_dowel_provider.dart`)
+
 ## [1.0.2] - 2026-11-16
 
 ### Changed

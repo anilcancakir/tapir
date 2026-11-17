@@ -231,7 +231,7 @@ Future<developer.ServiceExtensionResponse> extTapirNavigateHandler(
       if (!pushed) {
         final Element? root = WidgetsBinding.instance.rootElement;
         if (root != null) {
-          final NavigatorState? navigator = _findNavigator(root);
+          final NavigatorState? navigator = findOutermostNavigator(root);
           if (navigator != null) {
             try {
               // Fire-and-forget. `Navigator.pushNamed` returns a Future that
@@ -414,12 +414,13 @@ Future<developer.ServiceExtensionResponse> extTapirGetRoutesHandler(
 // ---------------------------------------------------------------------------
 
 /// Walks the element tree depth-first from [root] and returns the first
-/// [NavigatorState] found.
+/// [NavigatorState] found: the outermost one, which `showDialog` pushes on by
+/// default.
 ///
 /// [Navigator.maybeOf] requires a context that is already a descendant of the
 /// target Navigator, which is not available from the binding root. Walking the
 /// tree directly finds the Navigator regardless of nesting depth.
-NavigatorState? _findNavigator(Element root) {
+NavigatorState? findOutermostNavigator(Element root) {
   NavigatorState? found;
 
   void visit(Element element) {
@@ -485,7 +486,7 @@ String _currentLocation() {
   final Element? root = WidgetsBinding.instance.rootElement;
   if (root == null) return '';
 
-  final NavigatorState? navigator = _findNavigator(root);
+  final NavigatorState? navigator = findOutermostNavigator(root);
   if (navigator == null) return '';
 
   String location = '';

@@ -110,7 +110,7 @@ widget received.
 
 | Verb | `kind` | Fields |
 |:---|:---|:---|
-| `tapir_tap` | `treeChanged` | `changed` |
+| `tapir_tap` | `treeChanged` | `changed`, `routeChanged` (only when `true`) |
 | `tapir_type`, `tapir_clear`, `tapir_fill` | `text` | `verified`, `value` (read back off the live controller after the settle), `target` (`matchKind`, `label`, `rect`: which field was written) |
 | `tapir_scroll` | `scrollOffset` | `changed`, `before`, `after` |
 | `tapir_select_option` | `selected` | `verified`, `value` (what the dropdown holds after the settle) |
@@ -1596,7 +1596,11 @@ detached render objects). A button whose host rebuilt it into a shifted slot bet
 
 Success: `{ ref: "<ref>", effect: {kind: "treeChanged", changed: bool} }`. The `effect`
 block is always present: `changed` is true when the target's own route or semantics
-subtree differed after the tap, false when nothing observable happened. With `until` set
+subtree differed after the tap, false when the target stayed as it was. `routeChanged: true`
+is added when the top route of the root navigator, or of the navigator holding the tapped
+widget, changed (a dialog, sheet, menu, or a pushed or popped page), which `changed` does not
+see; it is absent otherwise. A route on a different nested navigator or a change elsewhere on
+the page is covered by neither: check with `tapir_snap` or `tapir_get_routes`. With `until` set
 the response also carries `untilMatched: true|false` (true when the expected text appeared
 within the window).
 

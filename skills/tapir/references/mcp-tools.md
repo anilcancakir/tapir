@@ -103,7 +103,7 @@ All run the actionability gate and accept `snapshot`, `includeSnapshot` (default
 
 | Tool | Params | Returns | Gesture |
 |:---|:---|:---|:---|
-| `tapir_tap` | `ref`, `retarget` (default true), `until`, `untilTimeoutMs` (default 3000) | `{ ref, effect: {kind: "treeChanged", changed}, untilMatched?, retargeted?, tapPointOutsideOwner? }` | Down, 50ms, Up at the live centre, re-read after the gate |
+| `tapir_tap` | `ref`, `retarget` (default true), `until`, `untilTimeoutMs` (default 3000) | `{ ref, effect: {kind: "treeChanged", changed, routeChanged?}, untilMatched?, retargeted?, tapPointOutsideOwner? }` | Down, 50ms, Up at the live centre, re-read after the gate |
 | `tapir_double_click` | `ref` | `{ ref }` | Two taps about 100ms apart, one gate |
 | `tapir_right_click` | `ref` | `{ ref, button: "right" }` | Secondary mouse button |
 | `tapir_triple_click` | `ref` | `{ ref, clickCount: 3 }` | Three taps about 100ms apart |

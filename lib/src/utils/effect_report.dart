@@ -86,11 +86,21 @@ Map<String, dynamic> textEffect({
 /// [before] and [after] are opaque tokens compared by equality. Scoped to
 /// the target rather than the whole tree, so unrelated background churn does
 /// not read as "something happened".
+///
+/// [routeChanged] is whether the top route of the outermost navigator, or of
+/// the navigator holding the target, differed (a dialog, sheet, menu or page
+/// pushed over the target, or one popped). It adds `routeChanged: true` only when set, so an unchanged run
+/// keeps the original two-key shape.
 Map<String, dynamic> treeChangedEffect({
   required String before,
   required String after,
+  bool routeChanged = false,
 }) {
-  return <String, dynamic>{'kind': 'treeChanged', 'changed': before != after};
+  return <String, dynamic>{
+    'kind': 'treeChanged',
+    'changed': before != after,
+    if (routeChanged) 'routeChanged': true,
+  };
 }
 
 /// Effect of a scroll: the scrollable's pixel offset on both sides of it.
