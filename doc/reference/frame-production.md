@@ -108,6 +108,8 @@ The block is **omitted entirely** on a healthy engine, so its presence is itself
 
 On desktop the second sentence reads "The window is hidden, minimised or occluded, or the display is asleep: bring the window to front and retry."
 
+**Refusing a stale screenshot.** `tapir:screenshot --strict` turns that banner into a failure: it exits `1` without writing the file (an existing file at the path is left untouched) and prints which path it refused. Without the flag the file is still written and the banner is only a warning. On a web (CDP) session `--strict` only covers `--ref` captures, because a full-viewport browser capture carries no frame signal.
+
 <a name="the-fallback"></a>
 ## The fallback
 

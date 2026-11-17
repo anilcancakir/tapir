@@ -8,6 +8,10 @@ This project follows [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- **`tapir:screenshot --strict` fails instead of writing a possibly stale frame.** While the app is not producing frames the extension still answers, so a script got a plausible image of an old frame; with the flag the command exits 1 and does not create or overwrite the file. Without it the behaviour is unchanged, and on a web (CDP) session it only covers `--ref` captures. Closes #98. (`lib/src/commands/tapir_screenshot_command.dart`, `lib/src/commands/frame_warning_output.dart`)
+
 ### Fixed
 
 - **A tap that opens or closes a dialog, sheet, menu or page reports the route change.** `effect.changed` measures only the label, value, enabled and checked flags of the target's own semantics subtree and its enclosing route name, and a dialog is a new route over the target, so the tap answered `changed: false` and the summary said "no observable change"; the effect now adds `routeChanged: true` when the top route of the root navigator or of the navigator holding the tapped widget changed (absent otherwise, independent of `changed` so both can be true, and `changed` keeps its meaning; a route on another nested navigator is not seen). The `tapir:tap` summary prints `(route changed; run tapir:snap to see it)` whenever `routeChanged` is true, otherwise `(target unchanged)` on no measured change. Fixes #95. (`lib/src/extensions/ext_pointer.dart`, `lib/src/utils/effect_report.dart`, `lib/src/commands/tapir_tap_command.dart`, `lib/src/tapir_dowel_provider.dart`)

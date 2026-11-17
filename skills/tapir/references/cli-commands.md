@@ -78,7 +78,7 @@ Flag names match the MCP parameter names (`--timeoutMs`, not `--timeout`), excep
 ./bin/dowel tapir:find --key="login-submit"
 ```
 
-`tapir:screenshot` takes `--format=jpeg|png` and `--quality`; without `--format` the format follows the `-o` extension, and a mismatch warns. On web with a `cdpPort` it falls back to CDP `Page.captureScreenshot`, clipped to `--ref` and `--rect`.
+`tapir:screenshot` takes `--format=jpeg|png` and `--quality`; without `--format` the format follows the `-o` extension, and a mismatch warns. On web with a `cdpPort` it falls back to CDP `Page.captureScreenshot`, clipped to `--ref` and `--rect`. `--strict` exits 1 without writing the file when the app is not producing frames (the stale-frame banner); on web it only covers `--ref` captures, because a full-viewport browser capture carries no frame signal.
 
 ### Pointer
 
