@@ -47,6 +47,14 @@ class TapirScreenshotCommand extends DowelCommand {
         help:
             'Sub-rect "x,y,w,h" in logical pixels, relative to the ref\'s '
             'top-left. Requires --ref.',
+      )
+      ..addFlag(
+        'strict',
+        negatable: false,
+        defaultsTo: false,
+        help:
+            'Refuse to write the file when the app is not producing frames. '
+            'On a web session this only covers --ref captures.',
       );
   }
 
@@ -61,6 +69,7 @@ class TapirScreenshotCommand extends DowelCommand {
     final String? rect = (rawRect != null && rawRect.isNotEmpty)
         ? rawRect
         : null;
+    final bool strict = (ctx.input.option('strict') as bool?) ?? false;
 
     if (output == null || output.isEmpty) {
       ctx.output.error(
@@ -102,12 +111,21 @@ class TapirScreenshotCommand extends DowelCommand {
     final int? cdpPort = _readCdpPort(state?['cdpPort']);
 
     if (cdpPort != null) {
-      return _handleCdpPath(ctx, cdpPort, output, format, quality, ref, rect);
+      return _handleCdpPath(
+        ctx,
+        cdpPort,
+        output,
+        format,
+        quality,
+        ref,
+        rect,
+        strict,
+      );
     }
 
     // 2. Native path: call the VM Service extension and decode the base64
     //    response payload.
-    return _handleNativePath(ctx, output, format, quality, ref, rect);
+    return _handleNativePath(ctx, output, format, quality, ref, rect, strict);
   }
 
   /// Captures a screenshot via Chrome DevTools Protocol.
@@ -129,13 +147,14 @@ class TapirScreenshotCommand extends DowelCommand {
     int quality,
     String? ref,
     String? rect,
+    bool strict,
   ) async {
     // 0. Resolve the clip before opening the CDP connection: a ref that no
     //    longer resolves is a caller error, and failing here keeps the error
     //    message about the ref rather than about Chrome.
     Map<String, dynamic>? clip;
     if (ref != null) {
-      clip = await _resolveClip(ctx, ref, rect);
+      clip = await _resolveClip(ctx, ref, rect, strict, output);
       if (clip == null) return 1;
     }
 
@@ -199,7 +218,8 @@ class TapirScreenshotCommand extends DowelCommand {
   /// which is a hard stop rather than a fallback: silently capturing the
   /// whole viewport would hand the caller an image that looks right and
   /// answers a different question, and that is the failure mode `--ref`
-  /// exists to remove.
+  /// exists to remove. Also returns null when [strict] is set and the
+  /// geometry call reported that the app is not producing frames.
   ///
   /// Flutter logical pixels and CDP CSS pixels are the same unit, so the
   /// rect crosses over unscaled.
@@ -215,13 +235,18 @@ class TapirScreenshotCommand extends DowelCommand {
     DowelContext ctx,
     String ref,
     String? rect,
+    bool strict,
+    String output,
   ) async {
     final Map<String, dynamic> geometry = await ctx
         .callExtension<Map<String, dynamic>>(
           'ext.tapir.screenshot',
           <String, dynamic>{'ref': ref, 'rect': ?rect, 'geometry': 'true'},
         );
-    reportFrameWarning(ctx, geometry);
+    if (reportFrameWarning(ctx, geometry) && strict) {
+      _reportStrictRefusal(ctx, output);
+      return null;
+    }
 
     final Object? raw = geometry['rect'];
     if (raw is! Map) {
@@ -262,8 +287,16 @@ class TapirScreenshotCommand extends DowelCommand {
     return null;
   }
 
+  void _reportStrictRefusal(DowelContext ctx, String output) {
+    ctx.output.error(
+      '--strict refused to write $output: the app is not producing frames, '
+      'so the frame may be stale.',
+    );
+  }
+
   /// Calls the VM Service extension `ext.tapir.screenshot` and writes the
-  /// decoded base64 bytes to [output].
+  /// decoded base64 bytes to [output], unless [strict] is set and the result
+  /// carries a frame warning: then nothing is written and the exit code is 1.
   Future<int> _handleNativePath(
     DowelContext ctx,
     String output,
@@ -271,6 +304,7 @@ class TapirScreenshotCommand extends DowelCommand {
     int quality,
     String? ref,
     String? rect,
+    bool strict,
   ) async {
     final Map<String, dynamic> result = await ctx
         .callExtension<Map<String, dynamic>>(
@@ -282,7 +316,10 @@ class TapirScreenshotCommand extends DowelCommand {
             'rect': ?rect,
           },
         );
-    reportFrameWarning(ctx, result);
+    if (reportFrameWarning(ctx, result) && strict) {
+      _reportStrictRefusal(ctx, output);
+      return 1;
+    }
     final String? base64Str = result['base64'] as String?;
     if (base64Str == null) {
       ctx.output.error('Screenshot extension returned no base64: $result');

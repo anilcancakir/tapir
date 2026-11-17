@@ -25,6 +25,7 @@ dart run tapir tapir:screenshot --output=<path>
                                           [--quality=<1-100>]
                                           [--ref=<eN|qN>]
                                           [--rect=<x,y,w,h>]
+                                          [--strict]
 ```
 
 `tapir:screenshot` requires a running Flutter session (`CommandBoot.connected`). It dials the VM Service URI. When `cdpPort` is set in state (a web target), the command uses CDP `Page.captureScreenshot`; otherwise it calls `ext.tapir.screenshot`, decodes the base64 payload, and writes the resulting bytes to the supplied output path.
@@ -41,6 +42,7 @@ dart run tapir tapir:screenshot --output=<path>
 | `--quality` | none | int (string-parsed) | `70` | no | JPEG quality, range 1-100. Ignored for PNG. Falls back to `70` when the value fails `int.tryParse`. |
 | `--ref` | none | string | (none) | no | Capture only this widget. An `e<N>` token from `tapir:snap` or a `q<N>` handle from `tapir:find`. Omit for the whole viewport. |
 | `--rect` | none | string `x,y,w,h` | (none) | no | Sub-rect in logical pixels, relative to the ref's top-left. Requires `--ref`. |
+| `--strict` | none | flag | `false` | no | Refuse to write the file when the app is not producing frames. CLI only; the `tapir_screenshot` MCP tool has no such knob. On a web (CDP) session it only covers `--ref` captures, because a full-viewport browser capture carries no frame signal. |
 
 The `--output` guard fires before the VM Service call; an empty or missing path returns exit code `1` with `Missing --output=<path>.`. `--rect` without `--ref` returns `1` as well, rather than quietly capturing the whole frame: a sub-rect is meaningless without the widget it is relative to, and an image that looks right but answers a different question is the failure this flag exists to remove.
 
@@ -54,7 +56,7 @@ The `--output` guard fires before the VM Service call; an empty or missing path 
 | Exit code | Meaning |
 |:-----------|:---------|
 | `0` | Screenshot captured and written. The command prints `Wrote <N> bytes (<K> KB, <format>) to <path>` where `<N>` is the size of the decoded image (useful for spotting empty buffers without inspecting the file). |
-| `1` | `--output` was missing or empty, or `--rect` was given without `--ref` (CLI-side guards); OR the VM Service handler returned a response without a `base64` field. |
+| `1` | `--output` was missing or empty, or `--rect` was given without `--ref` (CLI-side guards); OR the VM Service handler returned a response without a `base64` field; OR `--strict` was given and the result carried the [frame warning](../reference/frame-production.md) (the file is not created or overwritten, and stderr names the refused path). |
 
 **Success line (CLI side):**
 
@@ -80,7 +82,7 @@ When `--format` is not given, the format follows the `--output` extension: `.png
 - **jpeg** (default): on native targets the VM Service handler encodes via the `image` package's JPEG encoder at the supplied quality; on web (CDP path) the `format` + `quality` params are forwarded directly to `Page.captureScreenshot`. Quality 70 is a Playwright-aligned default; bump to 90 for visual-regression diffs, drop to 40 for quick sanity checks.
 - **png**: lossless, larger files (typically 5x JPEG at quality 70). The `--quality` value is ignored.
 
-On a hidden or minimised desktop window tapir wakes the app before the in-isolate capture (the response carries `framesForced: true`), so the image is a fresh frame rather than the last cached one. The CDP path on web is unaffected by the lifecycle. See [Frame production](../reference/frame-production.md).
+On a hidden or minimised desktop window tapir wakes the app before the in-isolate capture (the response carries `framesForced: true`), so the image is a fresh frame rather than the last cached one. The CDP path on web is unaffected by the lifecycle. When the app still produces no frames the command prints a stale-frame banner to stderr and writes the file anyway; add `--strict` to exit `1` without writing instead. See [Frame production](../reference/frame-production.md).
 
 The handler never resizes the screenshot; the captured image matches the running viewport's pixel dimensions (logical size times DPR). To capture at a controlled viewport, run `tapir:resize_viewport` or `tapir:device_profile` first.
 

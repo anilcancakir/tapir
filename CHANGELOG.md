@@ -8,6 +8,10 @@ This project follows [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- **`tapir:screenshot --strict` fails instead of writing a possibly stale frame.** While the app is not producing frames the extension still answers, so a script got a plausible image of an old frame; with the flag the command exits 1 and does not create or overwrite the file. Without it the behaviour is unchanged, and on a web (CDP) session it only covers `--ref` captures. Closes #98. (`lib/src/commands/tapir_screenshot_command.dart`, `lib/src/commands/frame_warning_output.dart`)
+
 ## [1.0.2] - 2026-11-16
 
 ### Changed
