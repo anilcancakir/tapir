@@ -5,6 +5,7 @@ import 'package:dowel/dowel.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:tapir/src/cdp/cdp_client.dart';
+import 'package:tapir/src/commands/frame_warning_output.dart';
 import 'package:tapir/src/commands/tapir_screenshot_command.dart';
 
 import '../cdp/fake_cdp_server.dart';
@@ -714,6 +715,170 @@ void main() {
         expect(exit, equals(1));
         expect(output.content, contains('no rect'));
       });
+    });
+  });
+
+  group('reportFrameWarning', () {
+    test('returns true and prints the banner when warnings are present', () {
+      final output = BufferedOutput();
+      final ctx = _StubContext(input: MapInput(const {}), output: output);
+
+      final warned = reportFrameWarning(ctx, const {
+        'warnings': {'lifecycleState': 'inactive', 'platform': 'macos'},
+      });
+
+      expect(warned, isTrue);
+      expect(output.content, contains('not producing frames'));
+    });
+
+    test('returns false and stays quiet without a warnings block', () {
+      final output = BufferedOutput();
+      final ctx = _StubContext(input: MapInput(const {}), output: output);
+
+      expect(reportFrameWarning(ctx, const {'base64': 'AA=='}), isFalse);
+      expect(reportFrameWarning(ctx, null), isFalse);
+      expect(output.content, isEmpty);
+    });
+  });
+
+  group('--strict', () {
+    const warnings = {
+      'warnings': {'lifecycleState': 'inactive', 'platform': 'macos'},
+    };
+    late Directory tempDir;
+
+    setUp(() async {
+      tempDir = await Directory.systemTemp.createTemp('tapir_strict_test_');
+      CdpClient.cdpHttpGet = CdpClient.defaultHttpGet;
+      CdpClient.cdpWsConnect = CdpClient.defaultWsConnect;
+    });
+
+    tearDown(() async {
+      StateFile.debugHomeOverride = null;
+      await tempDir.delete(recursive: true);
+    });
+
+    test(
+      'configure declares a non-negatable --strict flag, off by default',
+      () {
+        final parser = ArgParser();
+        TapirScreenshotCommand().configure(parser);
+
+        expect(parser.options.keys, contains('strict'));
+        expect(parser.options['strict']!.negatable, isFalse);
+        expect(parser.options['strict']!.defaultsTo, isFalse);
+      },
+    );
+
+    test('native path without --strict still writes a warned frame', () async {
+      await _writeState(tempDir, {'pid': 1234});
+      StateFile.debugHomeOverride = tempDir.path;
+
+      final outPath = '${tempDir.path}/warned.png';
+      final output = BufferedOutput();
+      final ctx = _StubContext(
+        input: MapInput({'output': outPath}),
+        output: output,
+        response: const {'base64': 'aGVsbG8=', ...warnings},
+      );
+
+      final exit = await TapirScreenshotCommand().handle(ctx);
+
+      expect(exit, equals(0));
+      expect(File(outPath).existsSync(), isTrue);
+      expect(output.content, contains('not producing frames'));
+    });
+
+    test('native path refuses to write a warned frame', () async {
+      await _writeState(tempDir, {'pid': 1234});
+      StateFile.debugHomeOverride = tempDir.path;
+
+      final outPath = '${tempDir.path}/warned.png';
+      final output = BufferedOutput();
+      final ctx = _StubContext(
+        input: MapInput({'output': outPath, 'strict': true}),
+        output: output,
+        response: const {'base64': 'aGVsbG8=', ...warnings},
+      );
+
+      final exit = await TapirScreenshotCommand().handle(ctx);
+
+      expect(exit, equals(1));
+      expect(File(outPath).existsSync(), isFalse);
+      expect(output.content, contains('--strict refused to write $outPath'));
+    });
+
+    test('native path leaves a pre-existing file untouched', () async {
+      await _writeState(tempDir, {'pid': 1234});
+      StateFile.debugHomeOverride = tempDir.path;
+
+      final outPath = '${tempDir.path}/existing.png';
+      File(outPath).writeAsStringSync('previous');
+      final ctx = _StubContext(
+        input: MapInput({'output': outPath, 'strict': true}),
+        output: BufferedOutput(),
+        response: const {'base64': 'aGVsbG8=', ...warnings},
+      );
+
+      final exit = await TapirScreenshotCommand().handle(ctx);
+
+      expect(exit, equals(1));
+      expect(File(outPath).readAsStringSync(), equals('previous'));
+    });
+
+    test('native path with --strict writes a healthy frame', () async {
+      await _writeState(tempDir, {'pid': 1234});
+      StateFile.debugHomeOverride = tempDir.path;
+
+      final outPath = '${tempDir.path}/healthy.png';
+      final ctx = _StubContext(
+        input: MapInput({'output': outPath, 'strict': true}),
+        output: BufferedOutput(),
+        response: const {'base64': 'aGVsbG8='},
+      );
+
+      final exit = await TapirScreenshotCommand().handle(ctx);
+
+      expect(exit, equals(0));
+      expect(File(outPath).existsSync(), isTrue);
+    });
+
+    test('CDP --ref path with a warned geometry sends no capture', () async {
+      final List<String> calls = <String>[];
+      final server = await FakeCdpServer.start(
+        handlers: {
+          'Page.enable': (Map<String, dynamic> _) async {
+            calls.add('Page.enable');
+            return <String, dynamic>{};
+          },
+          'Page.captureScreenshot': (Map<String, dynamic> _) async {
+            calls.add('Page.captureScreenshot');
+            return <String, dynamic>{'data': 'aGVsbG8='};
+          },
+        },
+      );
+      addTearDown(server.stop);
+
+      await _writeState(tempDir, {'cdpPort': server.port});
+      StateFile.debugHomeOverride = tempDir.path;
+
+      final outPath = '${tempDir.path}/region.png';
+      final output = BufferedOutput();
+      final ctx = _StubContext(
+        input: MapInput({'output': outPath, 'ref': 'e5', 'strict': true}),
+        output: output,
+        response: const {
+          'rect': {'x': 1.0, 'y': 2.0, 'width': 3.0, 'height': 4.0},
+          ...warnings,
+        },
+      );
+
+      final exit = await TapirScreenshotCommand().handle(ctx);
+
+      expect(exit, equals(1));
+      expect(calls, isEmpty);
+      expect(File(outPath).existsSync(), isFalse);
+      expect(output.content, contains('--strict refused to write $outPath'));
     });
   });
 

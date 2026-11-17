@@ -73,7 +73,7 @@ Any Flutter target that exposes a VM Service in a debug or profile build: Androi
 - [tapir:find](https://anilcancakir.com/tapir/docs/commands/tapir-find.md): a re-resolvable `q<N>` handle from predicates
 - [tapir:tap](https://anilcancakir.com/tapir/docs/commands/tapir-tap.md): a tap at a ref, with the effect report and retargeting
 - [tapir:fill](https://anilcancakir.com/tapir/docs/commands/tapir-fill.md): focus, clear, type and settle a text field in one call
-- [tapir:screenshot](https://anilcancakir.com/tapir/docs/commands/tapir-screenshot.md): the app or one widget to a file, with the CDP fallback on web
+- [tapir:screenshot](https://anilcancakir.com/tapir/docs/commands/tapir-screenshot.md): the app or one widget to a file, with the CDP fallback on web and `--strict` to refuse a stale frame
 - [tapir:reset_overlays](https://anilcancakir.com/tapir/docs/commands/tapir-reset-overlays.md): back to a clean screen in escalating layers
 - [tapir:run](https://anilcancakir.com/tapir/docs/commands/tapir-run.md): several verbs in one call, one summary line per step
 - [tapir:doctor](https://anilcancakir.com/tapir/docs/commands/tapir-doctor.md): runtime, wiring and session health in one pass
