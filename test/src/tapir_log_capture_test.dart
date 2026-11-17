@@ -248,6 +248,99 @@ void main() {
     });
 
     // -------------------------------------------------------------------------
+    // recentCapturedLogs(grep, logger)
+    // -------------------------------------------------------------------------
+
+    group('recentCapturedLogs() grep and logger filters', () {
+      test('grep is a case-insensitive substring match on the message', () {
+        final DebugPrintCallback priorPrint = debugPrint;
+        addTearDown(() => debugPrint = priorPrint);
+
+        installLogCapture();
+        addTearDown(uninstallLogCapture);
+
+        debugPrint('Payment FAILED for order 7');
+        debugPrint('unrelated');
+
+        final List<Map<String, dynamic>> result = recentCapturedLogs(
+          grep: 'failed',
+        );
+        expect(result, hasLength(1));
+        expect(result.single['message'], equals('Payment FAILED for order 7'));
+      });
+
+      test('logger is an exact match on the entry logger name', () {
+        final DebugPrintCallback priorPrint = debugPrint;
+        addTearDown(() => debugPrint = priorPrint);
+
+        installLogCapture();
+        addTearDown(uninstallLogCapture);
+
+        debugPrint('one');
+
+        expect(recentCapturedLogs(logger: 'debugPrint'), hasLength(1));
+        expect(recentCapturedLogs(logger: 'debug'), isEmpty);
+        expect(recentCapturedLogs(logger: 'DEBUGPRINT'), isEmpty);
+      });
+
+      test('filters apply before the limit clip', () {
+        final DebugPrintCallback priorPrint = debugPrint;
+        addTearDown(() => debugPrint = priorPrint);
+
+        installLogCapture();
+        addTearDown(uninstallLogCapture);
+
+        debugPrint('needle old');
+        debugPrint('needle new');
+        debugPrint('hay 1');
+        debugPrint('hay 2');
+
+        final List<Map<String, dynamic>> result = recentCapturedLogs(
+          limit: 1,
+          grep: 'needle',
+        );
+        expect(result.single['message'], equals('needle new'));
+      });
+    });
+
+    // -------------------------------------------------------------------------
+    // capturedLogsEvicted
+    // -------------------------------------------------------------------------
+
+    group('capturedLogsEvicted', () {
+      test('is false at the cap and true once an entry is evicted', () {
+        final DebugPrintCallback priorPrint = debugPrint;
+        addTearDown(() => debugPrint = priorPrint);
+
+        installLogCapture();
+        addTearDown(uninstallLogCapture);
+
+        for (int i = 0; i < 50; i++) {
+          debugPrint('message $i');
+        }
+        expect(capturedLogsEvicted, isFalse);
+
+        debugPrint('message 50');
+        expect(capturedLogsEvicted, isTrue);
+      });
+
+      test('resetCapturedLogsForTesting clears it', () {
+        final DebugPrintCallback priorPrint = debugPrint;
+        addTearDown(() => debugPrint = priorPrint);
+
+        installLogCapture();
+        for (int i = 0; i < 51; i++) {
+          debugPrint('message $i');
+        }
+        expect(capturedLogsEvicted, isTrue);
+
+        resetCapturedLogsForTesting();
+
+        expect(capturedLogsEvicted, isFalse);
+      });
+    });
+
+    // -------------------------------------------------------------------------
     // resetCapturedLogsForTesting()
     // -------------------------------------------------------------------------
 

@@ -193,7 +193,7 @@ No params. Returns `{ location, title, uri }`. `uri` is the mounted Router's loc
 
 ### tapir_console
 
-`limit` (50), `minLevel` (`INFO`, `WARNING`, `ERROR`). Returns `{ logs: [{ level, message, time, logger }], count }`: the app's own `debugPrint` output (logger `debugPrint`, newest first; a direct Dart `print` does not go through `debugPrint` and is not captured) followed by crumbs log entries when crumbs is wired. The two lists are appended, not sorted by `time`, and the `limit` clip cuts from the end, so a newer crumbs entry can sit below an older buffered one or be cut; sort by `time` yourself when order matters. A direct `developer.log` call is not captured.
+`limit` (50), `minLevel` (`INFO`, `WARNING`, `ERROR`), `grep` (case-insensitive message substring), `logger` (exact logger name; `debugPrint` for captured output); `grep` and `logger` apply before `limit`. The `debugPrint` buffer holds the last 50 lines. The reply carries `capped: true` once it dropped older ones: older output exists that no `limit` and no filter can reach (it stays on every later reply, and does not say this reply was bounded by the buffer). `grep` and `logger` search only what is still in the buffer. Returns `{ logs: [{ level, message, time, logger }], count }`: the app's own `debugPrint` output (logger `debugPrint`; a direct Dart `print` does not go through `debugPrint` and is not captured) merged with crumbs log entries when crumbs is wired, newest first by `time` (an entry with no parseable `time` follows the dated ones), and the `limit` clip keeps the newest. A direct `developer.log` call is not captured.
 
 ### tapir_exceptions
 

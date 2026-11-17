@@ -103,7 +103,7 @@ Read `recentExceptions` even after a clean reload: new code can throw on the nex
 4. tapir_console { minLevel: "WARNING", limit: 50 }
 ```
 
-The exception buffer is cumulative; without `clear` (or a `since` pinned before the action) one boot-time fault is reported against every screen of a sweep. `clear: true` empties only tapir's own buffer, not the crumbs store, so the `since` in step 3 is what keeps an earlier fault that crumbs still holds out of the answer. `tapir_console` lists the app's own `debugPrint` output even without crumbs; HTTP and the rest of the runtime buffers are the `crumbs` skill. There is no streaming tool: poll between actions.
+The exception buffer is cumulative; without `clear` (or a `since` pinned before the action) one boot-time fault is reported against every screen of a sweep. `clear: true` empties only tapir's own buffer, not the crumbs store, so the `since` in step 3 is what keeps an earlier fault that crumbs still holds out of the answer. `tapir_console` lists the app's own `debugPrint` output even without crumbs, from a buffer of the last 50 lines: `grep` and `logger` narrow what is still in that buffer, and `capped: true` in the reply means older lines were already dropped and no filter can reach them; HTTP and the rest of the runtime buffers are the `crumbs` skill. There is no streaming tool: poll between actions.
 
 ## Before and after a change
 

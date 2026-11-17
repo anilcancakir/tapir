@@ -1210,8 +1210,9 @@ class TapirDowelProvider extends DowelServiceProvider {
           'Read recent log entries from the running app.\n'
           '\n'
           'Returns the app\'s own `debugPrint` output from the buffer '
-          '`TapirPlugin.install()` fills, newest first, followed by the '
-          'log entries of `crumbs` when that separate package is wired. '
+          '`TapirPlugin.install()` fills, merged with the log entries of '
+          '`crumbs` when that separate package is wired, newest first by '
+          '`time`. '
           'Without crumbs the call still returns the `debugPrint` '
           'entries, so callers do not need to branch on install state. '
           'A direct `developer.log` call is not captured.\n'
@@ -1222,6 +1223,14 @@ class TapirDowelProvider extends DowelServiceProvider {
           '- Pass `limit: <n>` to cap the returned count.\n'
           '- Pass `minLevel: "WARNING"` (or `"ERROR"`) to filter by '
           'minimum severity level.\n'
+          '- Pass `grep: "<text>"` for a case-insensitive message match '
+          'and `logger: "<name>"` for an exact logger name (`debugPrint` '
+          'output is logger `debugPrint`). Both apply before `limit` and '
+          'search only what is still in the buffer.\n'
+          '- The `debugPrint` buffer holds the last 50 lines. `capped: '
+          'true` means it has dropped older lines, so older output exists '
+          'that no `limit` and no filter can reach; it does not say this '
+          'reply was bounded by the buffer.\n'
           '- Each log entry contains `level`, `message`, `time`, and '
           '`logger` fields.\n'
           '- Useful for asserting that a controller logged an expected '
@@ -1242,6 +1251,18 @@ class TapirDowelProvider extends DowelServiceProvider {
             'description':
                 'Minimum severity level to include. Examples: '
                 '`INFO`, `WARNING`, `ERROR`. Omit to include all levels.',
+          },
+          'grep': <String, dynamic>{
+            'type': 'string',
+            'description':
+                'Only entries whose message contains this text '
+                '(case-insensitive). Applied before `limit`.',
+          },
+          'logger': <String, dynamic>{
+            'type': 'string',
+            'description':
+                'Only entries from this exact logger name. `debugPrint` '
+                'output is logger `debugPrint`. Applied before `limit`.',
           },
         },
         'additionalProperties': false,

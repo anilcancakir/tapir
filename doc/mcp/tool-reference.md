@@ -241,15 +241,19 @@ calls appear only when crumbs is wired.
 |:---|:---|:---|:---|
 | `limit` | integer | no | Maximum number of entries to return. Default `50`. |
 | `minLevel` | string | no | Minimum severity level (`INFO`, `WARNING`, `ERROR`). Omit for all levels. |
+| `grep` | string | no | Only entries whose message contains this text, case-insensitive. Applied before `limit`. |
+| `logger` | string | no | Only entries from this exact logger name (`debugPrint` for the captured output). Applied before `limit`. |
 
 ### Returns
 
-Success: `{ logs: [ { level, message, time, logger }, ... ], count }`. The entries
-captured from `debugPrint` come first, newest first, and the crumbs entries (when crumbs
-is wired) follow in the order crumbs returns them; the two lists are not merged by time. A
-repeat of the same level, message and logger is dropped, the `debugPrint` copy winning, and
-the `limit` clip then cuts from the end, so a crumbs entry newer than a buffered one can sit
-below it or fall outside `limit`. `count` is the length of `logs` after the clip.
+Success: `{ logs: [ { level, message, time, logger }, ... ], count }`, plus `capped: true` once the
+`debugPrint` buffer (the last 50 lines) has dropped older ones. It means older output exists that no
+`limit` and no filter can reach; it stays on every later reply and does not say that this reply was
+bounded by the buffer. `grep` and `logger` search only what is still in the buffer. The entries
+captured from `debugPrint` and the crumbs entries (when crumbs is wired) are merged and ordered
+newest first by `time`; an entry with no parseable `time` follows the dated ones. A repeat of the
+same level, message and logger is dropped, the `debugPrint` copy winning, and the `limit` clip then
+keeps the newest. `count` is the length of `logs` after the clip.
 
 Error: never; missing crumbs is treated as the empty-logs success path.
 

@@ -167,6 +167,26 @@ void main() {
       );
     });
 
+    test(
+      'tapir_console descriptor accepts limit, minLevel, grep and logger',
+      () {
+        final console = tools.firstWhere((t) => t.name == 'tapir_console');
+        final properties =
+            console.inputSchema['properties'] as Map<String, dynamic>;
+        expect(
+          properties.keys,
+          containsAll(<String>['limit', 'minLevel', 'grep', 'logger']),
+        );
+        expect((properties['grep'] as Map<String, dynamic>)['type'], 'string');
+        expect(
+          (properties['logger'] as Map<String, dynamic>)['type'],
+          'string',
+        );
+        expect(console.inputSchema['additionalProperties'], isFalse);
+        expect(console.description, contains('capped'));
+      },
+    );
+
     // -------------------------------------------------------------------------
     // Extension methods
     // -------------------------------------------------------------------------
