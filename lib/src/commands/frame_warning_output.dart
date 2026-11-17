@@ -11,9 +11,12 @@ import 'package:dowel/dowel.dart';
 ///
 /// Goes to stderr, like the render-error banner, so stdout stays the payload
 /// a caller pipes into a tool.
-void reportFrameWarning(DowelContext ctx, Map<String, dynamic>? result) {
+///
+/// Returns true when it printed the banner, so a caller can refuse to trust
+/// the result; most callers ignore it.
+bool reportFrameWarning(DowelContext ctx, Map<String, dynamic>? result) {
   final warnings = result?['warnings'] as Map<String, dynamic>?;
-  if (warnings == null) return;
+  if (warnings == null) return false;
 
   final lifecycle = warnings['lifecycleState'] ?? 'unknown';
   final cause = warnings['platform'] == 'web'
@@ -25,4 +28,5 @@ void reportFrameWarning(DowelContext ctx, Map<String, dynamic>? result) {
     '⚠ The app is not producing frames (lifecycle: $lifecycle), so this '
     'result may be stale. $cause',
   );
+  return true;
 }
