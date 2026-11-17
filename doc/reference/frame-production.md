@@ -30,7 +30,7 @@ On desktop the same state follows the window: hidden, minimised or fully occlude
 Two separate symptoms, one cause:
 
 - **A snapshot loses its text.** Semantics labels are rebuilt during a frame. With no frames, `tapir:snap` returns the buttons and none of the `- text` nodes, so a screen that renders perfectly reads as completely empty. This has been mistaken for "the dashboard is permanently stuck on loading skeletons"; the screen was fine and a screenshot proved it.
-- **An action reports success and changes nothing.** A gesture is dispatched into the widget tree, but the frame that would apply it never runs. The handler returns a clean payload for a tap that could not possibly land. On a hidden macOS window a tap answered "no observable change" and a screenshot returned the last cached frame.
+- **An action reports success and changes nothing.** A gesture is dispatched into the widget tree, but the frame that would apply it never runs. The handler returns a clean payload for a tap that could not possibly land. On a hidden macOS window a tap answered `effect.changed: false` and a screenshot returned the last cached frame.
 
 <a name="what-tapir-does"></a>
 ## What tapir does
@@ -59,7 +59,7 @@ The same applies to routes: reading a ref's route (for `e<N>` relocation) uses `
 
 ### macOS
 
-Verified live with the window hidden (`osascript -e 'tell application "System Events" to set visible of process "<App>" to false'`): `tapir:tap`, `tapir:snap`, `tapir:screenshot` and `tapir:navigate` all work once the lifecycle is forced. Before forcing, taps reported "no observable change", snapshots went stale and screenshots returned the last cached frame.
+Verified live with the window hidden (`osascript -e 'tell application "System Events" to set visible of process "<App>" to false'`): `tapir:tap`, `tapir:snap`, `tapir:screenshot` and `tapir:navigate` all work once the lifecycle is forced. Before forcing, taps reported `effect.changed: false`, snapshots went stale and screenshots returned the last cached frame.
 
 One caveat remains: an asleep display can still starve frames. `caffeinate -u -t 3` wakes the display; that it fixes tapir's case has not been verified here.
 

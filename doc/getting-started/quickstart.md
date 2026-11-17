@@ -58,7 +58,7 @@ A successful tap prints one line:
 ✓ Tapped e1
 ```
 
-When nothing observable changed, the line reads `Tapped e1 (no observable change)`; read it before concluding the tap worked. Add `--json` for the full envelope, which carries the `effect` block.
+When no measured field of the tapped control changed (its label, value, enabled and checked flags, and its route name) and no route change was detected, the line reads `Tapped e1 (target unchanged)`; whenever the top route of the root navigator, or of the navigator that holds the control, changed (a dialog, sheet or page opened or closed there) it reads `Tapped e1 (route changed; run tapir:snap to see it)`; a route pushed on a different nested navigator is not seen, so take a `tapir:snap` before retrying a tap that reads `(target unchanged)`. Add `--json` for the full envelope, which carries the `effect` block.
 
 If the widget fails the actionability gate, the command exits with an error message:
 
@@ -103,7 +103,7 @@ Open the file to confirm the button reads `Counter: 1`. You now have the full sn
 | Running `flutter run` by hand, then `tapir:snap` finds no app. | Start the app with `dart run tapir start`, which records the session the `tapir:*` commands dial. |
 | Tapping an `eN` ref from an earlier snapshot after the screen changed. | Re-snap and use the ref from that snapshot, or mint a `qN` handle with `tapir:find` that survives rebuilds. |
 | The web screenshot hangs or returns an error. | Start with `--cdp-port=<port>` so the CLI captures through Chrome DevTools Protocol. |
-| The tap printed `no observable change`. | Nothing changed in the target's own subtree or the route; that does not prove the handler did not fire. Re-snap and check the intended result before retrying. |
+| The tap printed `target unchanged`. | No measured change: the label, value, enabled and checked flags of the target's own subtree, its route name, and the top route of the root navigator or of the one holding the target all stayed the same; that does not prove the handler did not fire. Re-snap and check the intended result before retrying. |
 
 <a name="related-documentation"></a>
 ## Related Documentation

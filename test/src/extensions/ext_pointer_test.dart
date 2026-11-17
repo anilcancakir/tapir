@@ -119,6 +119,66 @@ Widget _mergedBoundaryScreen() {
   );
 }
 
+/// A page with one `Open` button whose press runs [onPressed] with a context
+/// under the app's Navigator, or under a Navigator nested in the page when
+/// [nested] is set (a shell route's layout).
+Widget _routeButtonScreen(
+  void Function(BuildContext context) onPressed, {
+  bool nested = false,
+}) {
+  final Widget button = Center(
+    child: Builder(
+      builder: (BuildContext context) => ElevatedButton(
+        onPressed: () => onPressed(context),
+        child: const Text('Open'),
+      ),
+    ),
+  );
+
+  return MaterialApp(
+    home: Scaffold(
+      body: nested
+          ? Navigator(
+              onGenerateRoute: (RouteSettings settings) =>
+                  MaterialPageRoute<void>(
+                    builder: (BuildContext context) => button,
+                  ),
+            )
+          : button,
+    ),
+  );
+}
+
+/// Registers the button [finder] matches (the [_routeButtonScreen] one by
+/// default), taps it and returns the reply's `effect` block.
+Future<Map<String, dynamic>> _tapRouteButton(
+  WidgetTester tester, {
+  Finder? finder,
+}) async {
+  final Finder target = finder ?? find.byType(ElevatedButton);
+  final Element button = tester.element(target);
+  final RenderBox box = button.renderObject! as RenderBox;
+  final String ref = RefRegistry.register(
+    rect: box.localToGlobal(Offset.zero) & box.size,
+    element: button,
+    groupId: 'g',
+    isTextField: false,
+    node: tester.getSemantics(target),
+  );
+  final ServiceExtensionResponse response = await _pumpTap(
+    tester,
+    ref,
+    extra: const <String, String>{
+      'checkStable': 'false',
+      'checkReceivesEvents': 'false',
+    },
+  );
+  final Map<String, dynamic> decoded =
+      jsonDecode(response.result!) as Map<String, dynamic>;
+
+  return decoded['effect'] as Map<String, dynamic>;
+}
+
 List<String> _refsFor(String snapshot, String label) {
   return RegExp('"$label" \\[ref=(e\\d+)\\]')
       .allMatches(snapshot)
@@ -1861,6 +1921,127 @@ void main() {
           decoded['effect'] as Map<String, dynamic>;
       expect(effect['kind'], equals('treeChanged'));
       expect(effect['changed'], isFalse);
+    });
+
+    // -------------------------------------------------------------------------
+    // (d) routeChanged: a dialog or a page is a NEW route over the target, so
+    // the target-scoped `changed` stays false; the root navigator's top route
+    // says it moved (#95).
+    // -------------------------------------------------------------------------
+
+    testWidgets('(d) a tap that opens a dialog reports routeChanged:true', (
+      WidgetTester tester,
+    ) async {
+      _useSmallView(tester);
+      await tester.pumpWidget(
+        _routeButtonScreen(
+          (BuildContext context) => showDialog<void>(
+            context: context,
+            builder: (BuildContext context) =>
+                const AlertDialog(content: Text('Dialog body')),
+          ),
+        ),
+      );
+
+      final Map<String, dynamic> effect = await _tapRouteButton(tester);
+
+      expect(
+        effect,
+        equals(<String, dynamic>{
+          'kind': 'treeChanged',
+          'changed': false,
+          'routeChanged': true,
+        }),
+      );
+    });
+
+    testWidgets('(d) a tap that pushes a page reports routeChanged:true', (
+      WidgetTester tester,
+    ) async {
+      _useSmallView(tester);
+      await tester.pumpWidget(
+        _routeButtonScreen(
+          (BuildContext context) => Navigator.of(context).push<void>(
+            MaterialPageRoute<void>(
+              builder: (BuildContext context) =>
+                  const Scaffold(body: Text('Second page')),
+            ),
+          ),
+        ),
+      );
+
+      final Map<String, dynamic> effect = await _tapRouteButton(tester);
+
+      expect(effect['kind'], equals('treeChanged'));
+      expect(effect['routeChanged'], isTrue);
+    });
+
+    testWidgets('(d) an inert tap carries no routeChanged key', (
+      WidgetTester tester,
+    ) async {
+      _useSmallView(tester);
+      await tester.pumpWidget(_routeButtonScreen((BuildContext context) {}));
+
+      final Map<String, dynamic> effect = await _tapRouteButton(tester);
+
+      expect(
+        effect,
+        equals(<String, dynamic>{'kind': 'treeChanged', 'changed': false}),
+      );
+    });
+
+    testWidgets(
+      '(d) a sheet pushed on the nested navigator holding the target reports '
+      'routeChanged:true',
+      (WidgetTester tester) async {
+        _useSmallView(tester);
+        await tester.pumpWidget(
+          _routeButtonScreen(
+            (BuildContext context) => showModalBottomSheet<void>(
+              context: context,
+              builder: (BuildContext context) => const Text('Sheet body'),
+            ),
+            nested: true,
+          ),
+        );
+
+        final Map<String, dynamic> effect = await _tapRouteButton(tester);
+
+        expect(effect['changed'], isFalse);
+        expect(effect['routeChanged'], isTrue);
+      },
+    );
+
+    testWidgets('(d) an OK button that pops its dialog reports routeChanged', (
+      WidgetTester tester,
+    ) async {
+      _useSmallView(tester);
+      await tester.pumpWidget(
+        _routeButtonScreen(
+          (BuildContext context) => showDialog<void>(
+            context: context,
+            builder: (BuildContext context) => AlertDialog(
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('OK'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.byType(ElevatedButton));
+      for (int i = 0; i < 10; i++) {
+        await tester.pump(const Duration(milliseconds: 50));
+      }
+
+      final Map<String, dynamic> effect = await _tapRouteButton(
+        tester,
+        finder: find.byType(TextButton),
+      );
+
+      expect(effect['routeChanged'], isTrue);
     });
 
     // -------------------------------------------------------------------------

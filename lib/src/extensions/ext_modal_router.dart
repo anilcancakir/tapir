@@ -158,7 +158,7 @@ Future<int> _dismissModalsOn(NavigatorState navigator) async {
   int popped = 0;
 
   while (navigator.mounted) {
-    final Route<dynamic>? top = _topRoute(navigator);
+    final Route<dynamic>? top = topRouteOf(navigator);
     if (top is! PopupRoute) return popped;
 
     // 1. A route holding local history entries spends this pop on its newest
@@ -184,7 +184,11 @@ Future<int> _dismissModalsOn(NavigatorState navigator) async {
 }
 
 /// The route on top of [navigator], or `null` when its history is empty.
-Route<dynamic>? _topRoute(NavigatorState navigator) {
+///
+/// Inspect only: the `popUntil` predicate accepts the first route, so nothing
+/// is popped. Must not be called while [navigator] is mid-update (its history
+/// is locked during a push or pop).
+Route<dynamic>? topRouteOf(NavigatorState navigator) {
   Route<dynamic>? top;
   navigator.popUntil((Route<dynamic> route) {
     top = route;

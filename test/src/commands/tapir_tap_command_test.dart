@@ -198,7 +198,7 @@ void main() {
       expect(output.content, isNot(contains('Tapped e7')));
     });
 
-    test('the summary names a tap that changed nothing', () async {
+    test('the summary names a tap that left its target unchanged', () async {
       final output = BufferedOutput();
       final ctx = _StubContext(
         input: MapInput(const {'ref': 'e7'}),
@@ -211,7 +211,70 @@ void main() {
 
       await TapirTapCommand().handle(ctx);
 
-      expect(output.content, contains('no observable change'));
+      expect(output.content, contains('Tapped e7 (target unchanged)'));
+      expect(output.content, isNot(contains('no observable change')));
+    });
+
+    test('the summary points at snap when only the route changed', () async {
+      final output = BufferedOutput();
+      final ctx = _StubContext(
+        input: MapInput(const {'ref': 'e9'}),
+        output: output,
+        response: const {
+          'ref': 'e9',
+          'effect': {
+            'kind': 'treeChanged',
+            'changed': false,
+            'routeChanged': true,
+          },
+        },
+      );
+
+      await TapirTapCommand().handle(ctx);
+
+      expect(
+        output.content,
+        contains('Tapped e9 (route changed; run tapir:snap to see it)'),
+      );
+    });
+
+    test('the summary names a route change beside a target change', () async {
+      final output = BufferedOutput();
+      final ctx = _StubContext(
+        input: MapInput(const {'ref': 'e9'}),
+        output: output,
+        response: const {
+          'ref': 'e9',
+          'effect': {
+            'kind': 'treeChanged',
+            'changed': true,
+            'routeChanged': true,
+          },
+        },
+      );
+
+      await TapirTapCommand().handle(ctx);
+
+      expect(
+        output.content,
+        contains('Tapped e9 (route changed; run tapir:snap to see it)'),
+      );
+    });
+
+    test('the summary stays bare when the target changed', () async {
+      final output = BufferedOutput();
+      final ctx = _StubContext(
+        input: MapInput(const {'ref': 'e7'}),
+        output: output,
+        response: const {
+          'ref': 'e7',
+          'effect': {'kind': 'treeChanged', 'changed': true},
+        },
+      );
+
+      await TapirTapCommand().handle(ctx);
+
+      expect(output.content.trim(), endsWith('Tapped e7'));
     });
 
     test(

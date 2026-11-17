@@ -66,11 +66,12 @@ The two `check*` flags default to `true`. Disable them with the inverted form (`
 ✓ Tapped e2
 ```
 
-When the `effect` block reports no change, the one-line form says so rather than
-claiming a plain success:
+When the `effect` block reports no change on the target, the one-line form says so
+rather than claiming a plain success, and names a route change when there was one:
 
 ```
-✓ Tapped e2 (no observable change)
+✓ Tapped e2 (target unchanged)
+✓ Tapped e9 (route changed; run tapir:snap to see it)
 ```
 
 **Success envelope (`--includeSnapshot` on):**
@@ -91,9 +92,15 @@ claiming a plain success:
 }
 ```
 
-`changed` is `true` when the target's route or its own semantics subtree differed after the tap, `false` when nothing observable changed. The signal is deliberately scoped to the TARGET rather than the whole tree, so unrelated background churn does not read as "something happened", and a counter button whose own label increments does.
+`changed` is `true` when a measured field differed after the tap, `false` when none did. The measured fields are the label, value, enabled flag and checked flag of every node in the target's own semantics subtree, plus the name of its enclosing route; any other semantics property (a selected flag, say) is not compared, so a tap that changes only that reads `false`. The signal is deliberately scoped to the TARGET rather than the whole tree, so unrelated background churn does not read as "something happened", and a counter button whose own label increments does.
 
-`changed: false` means nothing changed within that measured scope (the target's own semantics subtree and the route). It is not proof that the handler did not fire: a handler that updates state elsewhere on the screen, or one that has no semantic effect, also reads `false`. Check the intended result with `tapir:snap` before retrying, because a tap is not safe to repeat blindly.
+A dialog, bottom sheet, menu or pushed page is a new route over the target, so on its own it leaves `changed` at `false`. The block then carries `routeChanged: true`, set when the top route (pushed or popped) changed on the root navigator or on the navigator that holds the tapped widget, such as a go_router `ShellRoute` navigator; the key is absent otherwise. The two are independent: a tap that updates its own label and opens a dialog reports `changed: true` and `routeChanged: true`, and the summary names the route change whenever `routeChanged` is set:
+
+```json
+{ "ref": "e9", "effect": { "kind": "treeChanged", "changed": false, "routeChanged": true } }
+```
+
+`changed: false` without `routeChanged` means no measured change: none of the fields above moved, and neither did the top routes of the root navigator and of the one holding the target. It is not proof that the handler did not fire: a route pushed on a different nested navigator, a handler that updates state elsewhere on the screen, one that changes an unmeasured semantics property, or one that has no semantic effect also reads that way. Check the intended result with `tapir:snap` or `tapir:get_routes` before retrying, because a tap is not safe to repeat blindly.
 
 **Stale `eN` refs.** When the widget behind an `eN` ref was rebuilt since the snapshot, the tap relocates it by the label and index the snapshot bound to the ref, provided the live tree has the same number of nodes with that label. The response then lists the ref: `"reresolved": ["e2"]`. With a different count the ref fails as `defunct (element no longer mounted)` and the agent re-snaps. The bound query has no role, so a node of another role with the same label in the same position could be matched.
 

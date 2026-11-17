@@ -25,7 +25,7 @@ Start the app with dowel (`./bin/dowel start --device=<dev>`, add `--cdp-port=92
 
 Default output depends on the verb:
 
-- A one-line summary on the action verbs, and it names a no-op instead of ticking it: `Tapped e7 (no observable change)`, `Scrolled e3 (nothing moved: ...)`, `Nothing to pop: already at the root route`, `Navigation to /x not confirmed: <reason>`.
+- A one-line summary on the action verbs, and it names a no-op instead of ticking it: `Tapped e7 (target unchanged)` (no measured change on the target), `Tapped e7 (route changed; run tapir:snap to see it)` (whenever `routeChanged` is true), `Scrolled e3 (nothing moved: ...)`, `Nothing to pop: already at the root route`, `Navigation to /x not confirmed: <reason>`.
 - The YAML tree for `tapir:snap`.
 - JSON for `tapir:find`, `tapir:observe`, `tapir:get_routes`, `tapir:console`, `tapir:exceptions`, `tapir:reset_overlays` and `tapir:hot_reload_and_snap`.
 - A file for `tapir:screenshot` (`-o` is required) and `tapir:perf_trace` (prints the path).

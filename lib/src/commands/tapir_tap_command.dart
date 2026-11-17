@@ -112,15 +112,18 @@ class TapirTapCommand extends DowelCommand {
     }
 
     // The summary names the one field worth reading. `effect.changed` is
-    // false for a tap the gate accepted that moved nothing, and a bare
-    // `✓ Tapped e7` would hide exactly that case.
+    // false for a tap that changed no measured field of its target, and a
+    // bare `✓ Tapped e7` would hide exactly that case; `routeChanged` says a
+    // dialog or page moved, which `changed` does not measure, so it is named
+    // whatever `changed` says.
     final effect = response['effect'] as Map<String, dynamic>?;
     final where = _retargetedNote(response['retargeted']);
-    ctx.output.success(
-      effect?['changed'] == false
-          ? 'Tapped $ref$where (no observable change)'
-          : 'Tapped $ref$where',
-    );
+    ctx.output.success(switch (effect) {
+      {'routeChanged': true} =>
+        'Tapped $ref$where (route changed; run tapir:snap to see it)',
+      {'changed': false} => 'Tapped $ref$where (target unchanged)',
+      _ => 'Tapped $ref$where',
+    });
     final snapshot = response['snapshot'] as String?;
     if (snapshot != null) ctx.output.writeln(snapshot);
     return 0;
