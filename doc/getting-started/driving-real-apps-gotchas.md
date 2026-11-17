@@ -97,6 +97,11 @@ failed.
 - When crumbs IS installed it enriches the output with `Logger.root.onRecord`
   entries and its other watchers. Direct `dart:developer log()` calls that
   bypass `debugPrint` still require the crumbs `LogWatcher`.
+- The buffer holds the last 50 lines, so `--limit=200` still returns at most 50 of
+  them, and one chatty source can fill it. Pass `--grep=<text>` or
+  `--logger=<name>` (both apply before `--limit`) to narrow what is still in
+  the buffer; the reply carries `"capped": true` once older lines were
+  dropped, and no filter can reach those.
 
 ---
 

@@ -8,6 +8,10 @@ This project follows [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+
+- **`tapir:console` takes `--grep` and `--logger`, and says when the capture buffer has dropped older lines.** `--limit=200` returned at most 50 entries because the `debugPrint` buffer holds 50, and one chatty source filled every slot. `--grep` (case-insensitive message substring) and `--logger` (exact logger name) now apply to both sources before `--limit` clips, and search only what is still in the buffer. The reply gains `capped: true` once the buffer has dropped older `debugPrint` lines, so older output exists that no `--limit` and no filter can reach; it stays on every later reply and does not say that this reply was bounded by the buffer, and it is absent until then. `ConsoleRequest` gains matching `grep` and `logger` fields (default null); while a filter is active the handler asks `recentLogsReader` for a large `limit` and filters the merged list itself, so a reader that clips to `limit` or ignores the filters stays correct. The merged list is now ordered newest first by `time` (crumbs entries used to follow the capture buffer, oldest first), so a `--limit` clip keeps the newest entries. Fixes #97. (`lib/src/extensions/ext_console.dart`, `lib/src/tapir_log_capture.dart`, `lib/src/commands/tapir_console_command.dart`, `lib/src/tapir_dowel_provider.dart`)
+
 ## [1.0.2] - 2026-11-16
 
 ### Changed

@@ -111,7 +111,7 @@ dart run tapir tapir:wait_for --text="Welcome back" --timeoutMs=5000
 | `tapir:wait_for` | Waits for `--text`, `--textGone` or `--expression` |
 | `tapir:wait_for_network_idle` | Waits until in-flight HTTP requests stay at zero for `--idleMs` |
 | `tapir:observe` | A flat candidate list of interactive widgets with `q<N>` handles: observe once, act many times (no model call inside tapir) |
-| `tapir:console`, `tapir:exceptions` | In-app `debugPrint` output and `FlutterError`s, overflow included; `--since=<iso8601>` scopes errors to one action |
+| `tapir:console`, `tapir:exceptions` | In-app `debugPrint` output and `FlutterError`s, overflow included; `--since=<iso8601>` scopes errors to one action; `--grep` and `--logger` narrow the console buffer |
 | `tapir:get_routes` | The router's location and the top page (`tapir:navigate` and `tapir:navigate_back` change it) |
 
 When the app is not producing frames (a hidden window or a backgrounded tab) tapir forces frames outside the web and reports `framesForced: true`; where it cannot, every response carries a `warnings` block rather than a stale answer that looks fresh. See [frame production](https://anilcancakir.com/tapir/docs/reference/frame-production).

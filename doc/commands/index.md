@@ -159,6 +159,13 @@ capture direct `dart:developer` `log()` calls that bypass `debugPrint`; those re
 `LogWatcher`. When crumbs is wired the two sources are merged and deduped; crumbs also adds `package:logging`
 (`Logger.root.onRecord`) and any other watcher it ships.
 
+The `debugPrint` buffer holds the last 50 lines, whatever `--limit` says, so one chatty source can fill it.
+`--grep=<text>` (case-insensitive message substring) and `--logger=<name>` (exact logger name; `debugPrint` for the
+captured output) apply to both sources before `--limit` clips, so a rare line is reachable behind a noisy one, as long
+as it is still in the buffer. The reply gains `"capped": true` once the buffer has dropped older lines: older output
+exists that no `--limit` and no filter can reach. It stays on every later reply and does not say that this reply was
+bounded by the buffer. The merged list is ordered newest first by `time`.
+
 `tapir:exceptions` is similar: tapir's own `FlutterError.onError` capture (non-fatal errors including overflow)
 is always present; crumbs augments when wired.
 
@@ -168,7 +175,7 @@ lets agents compute true before/after deltas: record the time before an action, 
 
 | Command | Description | Boot Mode | VM Extension |
 |:---------|:-------------|:-----------|:--------------|
-| `tapir:console` | Read recent log entries (in-package debugPrint capture; augmented by crumbs when wired). | connected | ext.tapir.console |
+| `tapir:console [--limit=<n>] [--minLevel=<level>] [--grep=<text>] [--logger=<name>]` | Read recent log entries (in-package debugPrint capture; augmented by crumbs when wired). `--grep` and `--logger` filter before `--limit`. | connected | ext.tapir.console |
 | `tapir:exceptions [--limit=<n>] [--since=<iso8601>]` | Read recent exception entries (in-package FlutterError capture + crumbs when wired). Optionally filter to entries strictly after `--since`. | connected | ext.tapir.exceptions |
 
 <a name="observe"></a>

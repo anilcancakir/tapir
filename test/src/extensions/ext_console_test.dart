@@ -102,16 +102,17 @@ void main() {
     test(
       '(e) reader returning logs: response carries correct shape and count',
       () async {
+        // Oldest first, like CrumbsStore.recentLogs; the handler orders it.
         recentLogsReader = (ConsoleRequest request) => [
           {
-            'level': 'INFO',
-            'message': 'hello',
+            'level': 'WARNING',
+            'message': 'watch out',
             'time': '2024-01-01T00:00:00.000Z',
             'logger': 'test.logger',
           },
           {
-            'level': 'WARNING',
-            'message': 'watch out',
+            'level': 'INFO',
+            'message': 'hello',
             'time': '2024-01-01T00:01:00.000Z',
             'logger': 'test.logger',
           },
@@ -293,6 +294,347 @@ void main() {
         );
       },
     );
+  });
+
+  // ---------------------------------------------------------------------------
+  // grep / logger filters and the capped marker
+  // ---------------------------------------------------------------------------
+
+  group('ext_console — grep and logger filters', () {
+    setUp(() {
+      recentLogsReader = (ConsoleRequest request) => const [];
+      resetCapturedLogsForTesting();
+    });
+
+    tearDown(() {
+      recentLogsReader = (ConsoleRequest request) => const [];
+      resetCapturedLogsForTesting();
+    });
+
+    Future<Map<String, dynamic>> callConsole(Map<String, String> params) async {
+      final response = await tapirConsoleHandler('ext.tapir.console', params);
+      return jsonDecode(response.result!) as Map<String, dynamic>;
+    }
+
+    List<String> messages(Map<String, dynamic> decoded) =>
+        (decoded['logs'] as List<dynamic>)
+            .map(
+              (dynamic e) => (e as Map<String, dynamic>)['message'] as String,
+            )
+            .toList();
+
+    // A crumbs-shaped entry: a local ISO time without an offset. The default
+    // year is newer than anything the in-package buffer records during a test;
+    // pass an old year for an entry older than the buffer.
+    Map<String, Object?> crumbEntry(
+      String message,
+      String logger, [
+      int second = 0,
+      int year = 2099,
+    ]) => <String, Object?>{
+      'level': 'INFO',
+      'message': message,
+      'logger': logger,
+      'time': DateTime(
+        year,
+        1,
+        1,
+      ).add(Duration(seconds: second)).toIso8601String(),
+    };
+
+    // Like CrumbsStore.recentLogs: oldest first, and `limit` keeps the newest.
+    List<Map<String, Object?>> Function(ConsoleRequest) oldestFirstReader(
+      List<Map<String, Object?>> store,
+    ) =>
+        (ConsoleRequest request) => store.length > request.limit
+        ? store.sublist(store.length - request.limit)
+        : store;
+
+    test('(j) a full debugPrint buffer no longer hides crumbs entries behind a '
+        'logger or grep filter', () async {
+      final DebugPrintCallback prior = debugPrint;
+      addTearDown(() => debugPrint = prior);
+      installLogCapture();
+      addTearDown(uninstallLogCapture);
+
+      for (int i = 0; i < 50; i++) {
+        debugPrint('chatty line $i');
+      }
+
+      recentLogsReader = oldestFirstReader(<Map<String, Object?>>[
+        crumbEntry('Legacy RARE-TOKEN sync', 'app.sync', 1, 2020),
+        crumbEntry('checkout started', 'app', 2, 2020),
+      ]);
+
+      // Without a filter the 50 newer debugPrint lines fill the limit.
+      expect(messages(await callConsole(<String, String>{})), hasLength(50));
+      expect(
+        messages(await callConsole(<String, String>{})),
+        isNot(contains('checkout started')),
+      );
+
+      expect(
+        messages(await callConsole(<String, String>{'logger': 'app'})),
+        equals(<String>['checkout started']),
+      );
+      expect(
+        messages(await callConsole(<String, String>{'grep': 'rare-token'})),
+        equals(<String>['Legacy RARE-TOKEN sync']),
+      );
+    });
+
+    test('(k) grep is a case-insensitive substring, logger is exact', () async {
+      recentLogsReader = oldestFirstReader(<Map<String, Object?>>[
+        crumbEntry('Payment FAILED', 'app.pay', 1),
+        crumbEntry('payment ok', 'app.pay', 2),
+        crumbEntry('payment failed again', 'app', 3),
+      ]);
+
+      expect(
+        messages(await callConsole(<String, String>{'grep': 'failed'})),
+        equals(<String>['payment failed again', 'Payment FAILED']),
+      );
+      expect(
+        messages(await callConsole(<String, String>{'logger': 'app'})),
+        equals(<String>['payment failed again']),
+      );
+      expect(
+        messages(
+          await callConsole(<String, String>{
+            'logger': 'app.pay',
+            'grep': 'FAILED',
+          }),
+        ),
+        equals(<String>['Payment FAILED']),
+      );
+    });
+
+    test('(l) filters apply before the limit clip', () async {
+      recentLogsReader = oldestFirstReader(<Map<String, Object?>>[
+        crumbEntry('needle older', 'app', 1),
+        crumbEntry('noise 1', 'app', 2),
+        crumbEntry('needle newer', 'app', 3),
+        crumbEntry('noise 2', 'app', 4),
+      ]);
+
+      final Map<String, dynamic> decoded = await callConsole(<String, String>{
+        'grep': 'needle',
+        'limit': '1',
+      });
+
+      expect(messages(decoded), equals(<String>['needle newer']));
+      expect(decoded['count'], equals(1));
+    });
+
+    test(
+      '(m) a reader that clips to request.limit still yields every match',
+      () async {
+        // Oldest first: both targets sit behind 100 newer noise entries, so a
+        // reader asked for the caller's limit of 10 would drop them.
+        final List<Map<String, Object?>> store = <Map<String, Object?>>[
+          crumbEntry('target one', 'app', 1),
+          crumbEntry('target two', 'app', 2),
+          for (int i = 0; i < 100; i++) crumbEntry('noise $i', 'app', 10 + i),
+        ];
+        final List<Map<String, Object?>> Function(ConsoleRequest) reader =
+            oldestFirstReader(store);
+        ConsoleRequest? seen;
+        recentLogsReader = (ConsoleRequest request) {
+          seen = request;
+          return reader(request);
+        };
+
+        final Map<String, dynamic> decoded = await callConsole(<String, String>{
+          'grep': 'target',
+          'limit': '10',
+        });
+
+        expect(messages(decoded), equals(<String>['target two', 'target one']));
+        expect(seen!.limit, greaterThan(store.length));
+        expect(seen!.grep, equals('target'));
+        expect(seen!.logger, isNull);
+      },
+    );
+
+    test(
+      '(s) a filtered limit keeps the newest matches across both sources',
+      () async {
+        final DebugPrintCallback prior = debugPrint;
+        addTearDown(() => debugPrint = prior);
+        installLogCapture();
+        addTearDown(uninstallLogCapture);
+
+        debugPrint('needle buffered');
+        recentLogsReader = oldestFirstReader(<Map<String, Object?>>[
+          crumbEntry('needle crumb A', 'app', 1),
+          crumbEntry('noise', 'app', 2),
+          crumbEntry('needle crumb B', 'app', 3),
+          crumbEntry('needle crumb C', 'app', 4),
+        ]);
+
+        final Map<String, dynamic> decoded = await callConsole(<String, String>{
+          'grep': 'needle',
+          'limit': '2',
+        });
+
+        expect(
+          messages(decoded),
+          equals(<String>['needle crumb C', 'needle crumb B']),
+        );
+      },
+    );
+
+    test(
+      '(t) an unfiltered merge is newest first by time across sources',
+      () async {
+        final DebugPrintCallback prior = debugPrint;
+        addTearDown(() => debugPrint = prior);
+        installLogCapture();
+        addTearDown(uninstallLogCapture);
+
+        debugPrint('buffered old');
+        debugPrint('buffered new');
+        recentLogsReader = oldestFirstReader(<Map<String, Object?>>[
+          crumbEntry('crumb ancient', 'app', 1, 2020),
+          crumbEntry('crumb recent', 'app', 2),
+        ]);
+
+        expect(
+          messages(await callConsole(<String, String>{})),
+          equals(<String>[
+            'crumb recent',
+            'buffered new',
+            'buffered old',
+            'crumb ancient',
+          ]),
+        );
+      },
+    );
+
+    test(
+      '(u) entries without a parseable time follow the dated ones',
+      () async {
+        recentLogsReader = (ConsoleRequest request) => <Map<String, Object?>>[
+          <String, Object?>{
+            'level': 'INFO',
+            'message': 'no time',
+            'logger': 'app',
+          },
+          crumbEntry('dated old', 'app', 1),
+          <String, Object?>{
+            'level': 'INFO',
+            'message': 'bad time',
+            'logger': 'app',
+            'time': 'not a time',
+          },
+          crumbEntry('dated new', 'app', 2),
+        ];
+
+        expect(
+          messages(await callConsole(<String, String>{})),
+          equals(<String>['dated new', 'dated old', 'no time', 'bad time']),
+        );
+      },
+    );
+
+    test('(n) without a filter the reader gets the caller limit', () async {
+      ConsoleRequest? seen;
+      recentLogsReader = (ConsoleRequest request) {
+        seen = request;
+        return const [];
+      };
+
+      await callConsole(<String, String>{'limit': '7'});
+
+      expect(seen!.limit, equals(7));
+      expect(seen!.grep, isNull);
+      expect(seen!.logger, isNull);
+    });
+
+    test('(o) an empty grep or logger param means no filter', () async {
+      ConsoleRequest? seen;
+      recentLogsReader = (ConsoleRequest request) {
+        seen = request;
+        return <Map<String, Object?>>[crumbEntry('kept', 'app')];
+      };
+
+      final Map<String, dynamic> decoded = await callConsole(<String, String>{
+        'grep': '',
+        'logger': '',
+      });
+
+      expect(messages(decoded), equals(<String>['kept']));
+      expect(seen!.limit, equals(50));
+      expect(seen!.grep, isNull);
+      expect(seen!.logger, isNull);
+    });
+  });
+
+  group('ext_console — capped marker', () {
+    setUp(() {
+      recentLogsReader = (ConsoleRequest request) => const [];
+      resetCapturedLogsForTesting();
+    });
+
+    tearDown(resetCapturedLogsForTesting);
+
+    test('(p) capped is absent while the buffer has not evicted', () async {
+      final DebugPrintCallback prior = debugPrint;
+      addTearDown(() => debugPrint = prior);
+      installLogCapture();
+      addTearDown(uninstallLogCapture);
+
+      for (int i = 0; i < 50; i++) {
+        debugPrint('line $i');
+      }
+
+      final response = await tapirConsoleHandler(
+        'ext.tapir.console',
+        <String, String>{},
+      );
+      final Map<String, dynamic> decoded =
+          jsonDecode(response.result!) as Map<String, dynamic>;
+      expect(decoded.containsKey('capped'), isFalse);
+    });
+
+    test('(q) capped is true once the buffer evicted older lines', () async {
+      final DebugPrintCallback prior = debugPrint;
+      addTearDown(() => debugPrint = prior);
+      installLogCapture();
+      addTearDown(uninstallLogCapture);
+
+      for (int i = 0; i < 51; i++) {
+        debugPrint('line $i');
+      }
+
+      final response = await tapirConsoleHandler(
+        'ext.tapir.console',
+        <String, String>{'limit': '200'},
+      );
+      final Map<String, dynamic> decoded =
+          jsonDecode(response.result!) as Map<String, dynamic>;
+      expect(decoded['capped'], isTrue);
+      expect(decoded['count'], equals(50));
+    });
+
+    test('(r) capped clears with the buffer reset', () async {
+      final DebugPrintCallback prior = debugPrint;
+      addTearDown(() => debugPrint = prior);
+      installLogCapture();
+
+      for (int i = 0; i < 51; i++) {
+        debugPrint('line $i');
+      }
+      resetCapturedLogsForTesting();
+
+      final response = await tapirConsoleHandler(
+        'ext.tapir.console',
+        <String, String>{},
+      );
+      final Map<String, dynamic> decoded =
+          jsonDecode(response.result!) as Map<String, dynamic>;
+      expect(decoded.containsKey('capped'), isFalse);
+    });
   });
 
   group('ext_console — MCP descriptor presence', () {
