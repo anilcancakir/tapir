@@ -598,15 +598,14 @@ Future<developer.ServiceExtensionResponse> tapirTapHandler(
   // 3. Effect verification. Recapture the TARGET-scoped signal AFTER the
   //    pointer settled and compare it against [preSignal]. A differing token
   //    means the tap produced an observable effect on the target (its own
-  //    label / route changed); an identical token means the target did not
-  //    change, which is the reading a bare success hides. A dialog or page
-  //    pushed over the target leaves that token alone, so [_RouteMark]
-  //    compares the top routes of the root navigator and of the one holding
-  //    the target, and adds `routeChanged` when either moved. The recapture
-  //    reuses
-  //    the same [entry] — the live-rect dispatch above keeps the Element /
-  //    SemanticsNode identity, so `entry.node.getSemanticsData()` reflects the
-  //    post-rebuild subtree. The signal collapses to the route name alone for
+  //    label, value, enabled or checked flag, or its route name changed); an
+  //    identical token means no measured field changed, which is the reading
+  //    a bare success hides. A dialog or page pushed over the target leaves
+  //    that token alone, so [_RouteMark] compares the top routes of the root
+  //    navigator and of the one holding the target, and adds `routeChanged`
+  //    when either moved. The recapture reuses the same [entry]: the
+  //    live-rect dispatch above keeps the Element / SemanticsNode identity,
+  //    so `entry.node.getSemanticsData()` reflects the post-rebuild subtree. The signal collapses to the route name alone for
   //    synthetic (node-less) entries, which is still a valid before/after
   //    comparison. Failures here are post-dispatch noise: the field is simply
   //    omitted rather than converting a successful tap into an error.

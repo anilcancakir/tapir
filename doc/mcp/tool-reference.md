@@ -1595,11 +1595,12 @@ detached render objects). A button whose host rebuilt it into a shifted slot bet
 ### Returns
 
 Success: `{ ref: "<ref>", effect: {kind: "treeChanged", changed: bool} }`. The `effect`
-block is always present: `changed` is true when the target's own route or semantics
-subtree differed after the tap, false when the target stayed as it was. `routeChanged: true`
-is added when the top route of the root navigator, or of the navigator holding the tapped
-widget, changed (a dialog, sheet, menu, or a pushed or popped page), which `changed` does not
-see; it is absent otherwise. A route on a different nested navigator or a change elsewhere on
+block is always present: `changed` is true when a measured field differed after the tap
+(the label, value, enabled and checked flags of the target's own semantics subtree, and its
+enclosing route name), false on no measured change; any other semantics property is not
+compared. `routeChanged: true` is added when the top route of the root navigator, or of the
+navigator holding the tapped widget, changed (a dialog, sheet, menu, or a pushed or popped
+page), which `changed` does not see; it is absent otherwise, and both can be true together. A route on a different nested navigator or a change elsewhere on
 the page is covered by neither: check with `tapir_snap` or `tapir_get_routes`. With `until` set
 the response also carries `untilMatched: true|false` (true when the expected text appeared
 within the window).

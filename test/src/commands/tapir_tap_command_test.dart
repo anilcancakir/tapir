@@ -238,6 +238,29 @@ void main() {
       );
     });
 
+    test('the summary names a route change beside a target change', () async {
+      final output = BufferedOutput();
+      final ctx = _StubContext(
+        input: MapInput(const {'ref': 'e9'}),
+        output: output,
+        response: const {
+          'ref': 'e9',
+          'effect': {
+            'kind': 'treeChanged',
+            'changed': true,
+            'routeChanged': true,
+          },
+        },
+      );
+
+      await TapirTapCommand().handle(ctx);
+
+      expect(
+        output.content,
+        contains('Tapped e9 (route changed; run tapir:snap to see it)'),
+      );
+    });
+
     test('the summary stays bare when the target changed', () async {
       final output = BufferedOutput();
       final ctx = _StubContext(
