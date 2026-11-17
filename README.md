@@ -126,7 +126,7 @@ dart run tapir tapir:device_profile --preset=pixel-8
 
 | Surface | Behaviour |
 |:---|:---|
-| `tapir:screenshot` | JPEG (default) or PNG of the viewport, or of one widget with `--ref` (and a sub-rect of it with `--rect`); `--strict` exits 1 without writing the file when the app is not producing frames |
+| `tapir:screenshot` | JPEG (default) or PNG of the viewport, or of one widget with `--ref` (and a sub-rect of it with `--rect`); `--strict` exits 1 without writing the file when the app is not producing frames (on a web session it covers `--ref` captures only) |
 | Web screenshot | With `--cdp-port`, the CLI captures through CDP `Page.captureScreenshot`; the `tapir_screenshot` MCP tool stays in-isolate and can time out under CanvasKit, so prefer the CLI on web; a `--cdp-port` session cannot run `tapir_evaluate` (the `web-server` device has no evaluate) |
 | `tapir:device_profile` | Presets `iphone-x`, `iphone-13`, `iphone-15-pro`, `pixel-5`, `pixel-8`, `ipad-pro-12.9`, `desktop-1440`, `desktop-1920` (viewport, DPR, touch, user agent); the emulation ends with the command, the window size stays. `tapir:resize_viewport --width --height` overrides the viewport until exit, or longer with `--hold` |
 | `tapir:hot_reload_and_snap` | Hot reload, then snapshot, screenshot and recent exceptions in one round trip |
