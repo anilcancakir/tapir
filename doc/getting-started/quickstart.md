@@ -58,7 +58,7 @@ A successful tap prints one line:
 ✓ Tapped e1
 ```
 
-When no measured field of the tapped control changed (its label, value, enabled and checked flags, and its route name), the line reads `Tapped e1 (target unchanged)`; whenever the top route of the root navigator, or of the navigator that holds the control, changed (a dialog, sheet or page opened or closed there) it reads `Tapped e1 (route changed; run tapir:snap to see it)`; a route pushed on a different nested navigator is not seen, so take a `tapir:snap` before retrying a tap that reads `(target unchanged)`. Add `--json` for the full envelope, which carries the `effect` block.
+When no measured field of the tapped control changed (its label, value, enabled and checked flags, and its route name) and no route change was detected, the line reads `Tapped e1 (target unchanged)`; whenever the top route of the root navigator, or of the navigator that holds the control, changed (a dialog, sheet or page opened or closed there) it reads `Tapped e1 (route changed; run tapir:snap to see it)`; a route pushed on a different nested navigator is not seen, so take a `tapir:snap` before retrying a tap that reads `(target unchanged)`. Add `--json` for the full envelope, which carries the `effect` block.
 
 If the widget fails the actionability gate, the command exits with an error message:
 
