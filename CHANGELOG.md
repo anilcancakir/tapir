@@ -11,6 +11,9 @@ This project follows [Semantic Versioning 2.0.0](https://semver.org/spec/v2.0.0.
 ### Added
 
 - **`tapir:screenshot --strict` fails instead of writing a possibly stale frame.** While the app is not producing frames the extension still answers, so a script got a plausible image of an old frame; with the flag the command exits 1 and does not create or overwrite the file. Without it the behaviour is unchanged, and on a web (CDP) session it only covers `--ref` captures. Closes #98. (`lib/src/commands/tapir_screenshot_command.dart`, `lib/src/commands/frame_warning_output.dart`)
+### Fixed
+
+- **`tapir:snap` keeps one node on one line when a label or value holds a line break.** A semantics label such as `Have an account?\nSign in` printed as two lines with the `[ref=eN]` token after the second, which broke the one-node-per-line shape that agents and the snapshot diff key on. `\n` and `\r` in a printed label, value or text line are now escaped as the two characters `\n` and `\r`; ref resolution still binds the raw label, and a label copied from the printed form needs its escapes undone before it is passed to a matching command. Fixes #96. (`lib/src/extensions/ext_snapshot.dart`, `skills/tapir/`, `doc/commands/tapir-snap.md`)
 
 ## [1.0.2] - 2026-11-16
 

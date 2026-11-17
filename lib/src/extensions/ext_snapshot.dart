@@ -779,8 +779,11 @@ String _visibilityMarker(RenderObject renderObject, Rect rect) {
 
 String _indent(int depth) => '  ' * depth;
 
-String _escape(String input) =>
-    input.replaceAll(r'\', r'\\').replaceAll('"', r'\"');
+String _escape(String input) => input
+    .replaceAll(r'\', r'\\')
+    .replaceAll('"', r'\"')
+    .replaceAll('\n', r'\n')
+    .replaceAll('\r', r'\r');
 
 /// Returns true if [renderObject] or any of its render-parent ancestors is
 /// currently overflowing.
