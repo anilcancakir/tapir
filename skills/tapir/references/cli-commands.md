@@ -146,6 +146,7 @@ Flag names match the MCP parameter names (`--timeoutMs`, not `--timeout`), excep
 
 ```bash
 ./bin/dowel tapir:console --minLevel=WARNING --limit=20
+./bin/dowel tapir:console --grep=timeout --logger=debugPrint   # filters apply before --limit; "capped": true means the 50-line buffer dropped older output no filter can reach
 ./bin/dowel tapir:exceptions --limit=5
 ./bin/dowel tapir:exceptions --since=2026-11-07T10:00:00Z --clear
 ./bin/dowel tapir:close_app

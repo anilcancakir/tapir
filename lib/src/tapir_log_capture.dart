@@ -27,6 +27,10 @@ DebugPrintCallback _prior = debugPrintThrottled;
 /// `CrumbsStore.recentLogs` returns when wired).
 final List<Map<String, dynamic>> _buffer = <Map<String, dynamic>>[];
 
+/// Whether [_record] has ever dropped the oldest entry because the buffer was
+/// full, so older output exists that no read can reach.
+bool _evicted = false;
+
 // ---------------------------------------------------------------------------
 // Numeric level values (mirrors dart:logging Level constants, no import needed)
 // ---------------------------------------------------------------------------
@@ -109,9 +113,34 @@ void uninstallLogCapture() {
   _installed = false;
 }
 
+/// Whether the capture buffer has dropped its oldest entries to stay within
+/// its cap, so a read cannot reach every line the app printed.
+bool get capturedLogsEvicted => _evicted;
+
+/// Returns true when [entry] passes the optional [grep] and [logger] filters.
+///
+/// [grep] is a case-insensitive substring match on the entry `message`;
+/// [logger] is an exact match on the entry `logger`. A null filter passes.
+bool matchesLogFilters(
+  Map<String, dynamic> entry, {
+  String? grep,
+  String? logger,
+}) {
+  if (logger != null && entry['logger'] != logger) {
+    return false;
+  }
+  if (grep != null &&
+      !'${entry['message']}'.toLowerCase().contains(grep.toLowerCase())) {
+    return false;
+  }
+  return true;
+}
+
 /// Returns the most recently captured log entries, newest-first, up to
 /// [limit] entries. When [minLevel] is provided (e.g. `'WARNING'`), only
-/// entries at or above that level are included.
+/// entries at or above that level are included. [grep] and [logger] narrow the
+/// entries the same way as [matchesLogFilters]. Every filter applies before the
+/// [limit] clip, so a rare entry is reachable behind a run of noisier ones.
 ///
 /// Used by `ext.tapir.console` to surface in-package log entries even when
 /// `crumbs` is absent. Returns defensive copies so callers
@@ -119,13 +148,14 @@ void uninstallLogCapture() {
 List<Map<String, dynamic>> recentCapturedLogs({
   int limit = 20,
   String? minLevel,
+  String? grep,
+  String? logger,
 }) {
-  final Iterable<Map<String, dynamic>> candidates = minLevel != null
-      ? _buffer.where(
-          (Map<String, dynamic> e) =>
-              _meetsLevel(e['level'] as String, minLevel),
-        )
-      : _buffer;
+  final Iterable<Map<String, dynamic>> candidates = _buffer.where(
+    (Map<String, dynamic> e) =>
+        (minLevel == null || _meetsLevel(e['level'] as String, minLevel)) &&
+        matchesLogFilters(e, grep: grep, logger: logger),
+  );
 
   final List<Map<String, dynamic>> list = candidates.toList();
   final int count = limit < list.length ? limit : list.length;
@@ -140,6 +170,7 @@ List<Map<String, dynamic>> recentCapturedLogs({
 void resetCapturedLogsForTesting() {
   uninstallLogCapture();
   _buffer.clear();
+  _evicted = false;
 }
 
 // ---------------------------------------------------------------------------
@@ -180,5 +211,6 @@ void _record(String message) {
 
   if (_buffer.length > _kCaptureCap) {
     _buffer.removeLast();
+    _evicted = true;
   }
 }

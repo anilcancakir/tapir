@@ -70,6 +70,38 @@ void main() {
       expect(ctx.lastParams, containsPair('minLevel', 'WARNING'));
     });
 
+    test('configure declares --grep and --logger', () {
+      final parser = ArgParser();
+      TapirConsoleCommand().configure(parser);
+      expect(parser.options.keys, containsAll(<String>['grep', 'logger']));
+    });
+
+    test('handle forwards --grep and --logger params', () async {
+      final ctx = _StubContext(
+        input: MapInput(const {'grep': 'timeout', 'logger': 'app.sync'}),
+        output: BufferedOutput(),
+        response: const {'logs': <dynamic>[], 'count': 0},
+      );
+
+      await TapirConsoleCommand().handle(ctx);
+
+      expect(ctx.lastParams, containsPair('grep', 'timeout'));
+      expect(ctx.lastParams, containsPair('logger', 'app.sync'));
+    });
+
+    test('handle omits --grep and --logger when absent', () async {
+      final ctx = _StubContext(
+        input: MapInput(const {}),
+        output: BufferedOutput(),
+        response: const {'logs': <dynamic>[], 'count': 0},
+      );
+
+      await TapirConsoleCommand().handle(ctx);
+
+      expect(ctx.lastParams, isNot(contains('grep')));
+      expect(ctx.lastParams, isNot(contains('logger')));
+    });
+
     test('handle returns 0 on success', () async {
       final ctx = _StubContext(
         input: MapInput(const {}),
