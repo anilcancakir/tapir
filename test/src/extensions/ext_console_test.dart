@@ -511,6 +511,50 @@ void main() {
       },
     );
 
+    test('(v) a repeated crumbs entry keeps its newest occurrence', () async {
+      recentLogsReader = oldestFirstReader(<Map<String, Object?>>[
+        crumbEntry('repeat', 'app', 1),
+        crumbEntry('other', 'app', 2),
+        crumbEntry('repeat', 'app', 3),
+      ]);
+      final Object? newest = crumbEntry('repeat', 'app', 3)['time'];
+
+      for (final Map<String, String> params in <Map<String, String>>[
+        <String, String>{'logger': 'app', 'limit': '1'},
+        <String, String>{'limit': '1'},
+      ]) {
+        final Map<String, dynamic> decoded = await callConsole(params);
+        final Map<String, dynamic> first =
+            (decoded['logs'] as List<dynamic>).single as Map<String, dynamic>;
+        expect(first['message'], equals('repeat'));
+        expect(first['time'], equals(newest));
+      }
+    });
+
+    test('(w) a cross-source duplicate keeps the buffered entry', () async {
+      final DebugPrintCallback prior = debugPrint;
+      addTearDown(() => debugPrint = prior);
+      installLogCapture();
+      addTearDown(uninstallLogCapture);
+
+      debugPrint('shared line');
+      recentLogsReader = oldestFirstReader(<Map<String, Object?>>[
+        crumbEntry('shared line', 'debugPrint', 1),
+      ]);
+
+      final Map<String, dynamic> decoded = await callConsole(<String, String>{
+        'logger': 'debugPrint',
+      });
+
+      final List<dynamic> logs = decoded['logs'] as List<dynamic>;
+      expect(logs, hasLength(1));
+      // The buffer stamps UTC ('Z'); the crumbs fake stamps local time.
+      expect(
+        ((logs.single as Map<String, dynamic>)['time'] as String).endsWith('Z'),
+        isTrue,
+      );
+    });
+
     test(
       '(u) entries without a parseable time follow the dated ones',
       () async {

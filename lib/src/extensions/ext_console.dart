@@ -180,16 +180,17 @@ Future<developer.ServiceExtensionResponse> tapirConsoleHandler(
       ),
     );
 
-    // 3. Merge, dedup by (level, message, logger) (buffered entries come first
-    //    so they win on dedup conflicts), apply the filters a reader may have
-    //    ignored, order newest-first by time (a reader may return either
-    //    order), then clip to limit.
+    // 3. Merge, dedup by (level, message, logger), apply the filters a reader
+    //    may have ignored, order newest-first by time (a reader may return
+    //    either order), then clip to limit. Crumbs entries are ordered first so
+    //    dedup keeps the newest occurrence of a repeat, and buffered entries
+    //    stay ahead of them so they win a cross-source duplicate.
     final Set<String> seen = <String>{};
     final List<Map<String, dynamic>> merged = <Map<String, dynamic>>[];
 
     for (final Map<String, dynamic> entry in <Map<String, dynamic>>[
       ...buffered,
-      ...crumbs,
+      ..._newestFirst(crumbs),
     ]) {
       final String key =
           '${entry['level']} ${entry['message']} ${entry['logger']}';
