@@ -83,7 +83,7 @@ body:
     id: tapir-version
     attributes:
       label: tapir Version
-      placeholder: "1.0.2"
+      placeholder: "1.1.0"
     validations:
       required: true
 
