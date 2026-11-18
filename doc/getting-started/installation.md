@@ -36,7 +36,7 @@ VM Service extensions to register against. Pure-Dart environments are not suppor
 |:-----------|:--------|:------------|
 | Dart       | `^3.13.0` | latest stable |
 | Flutter    | `>= 3.47.0` | latest stable |
-| dowel | `^1.0.0` | latest |
+| dowel | `^1.0.5` | latest |
 
 Install `dowel` first if it is not already in your project. It provides
 the MCP server, the CLI framework, and the `registerExtensionIdempotent` helper that
@@ -59,7 +59,7 @@ Alternatively, add it manually to `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  tapir: ^1.0.2
+  tapir: ^1.1.0
 ```
 
 Then fetch dependencies:
